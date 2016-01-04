@@ -29,7 +29,7 @@ public class ServiceRow extends JPanel implements ActionListener{
 	
 	public ServiceRow(TacomsMng mng, String serviceName, ServiceID serviceID ,Boolean isServiceEnabled){
 		this.mng = mng;
-		this.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 10));//;new BoxLayout(this, BoxLayout.LINE_AXIS));
+		this.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 10));//;);
 		this.setBackground(NEXT_COLOR);
 		configureServiceLabel(serviceName);
 		configureButtons(mng, serviceName, serviceID, isServiceEnabled);

@@ -1,7 +1,9 @@
 package manager;
 
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import gui.Logger;
 import gui.MainWindow;
 import gui.ServiceID;
 import gui.ServicesPanel;
@@ -13,8 +15,10 @@ public class TacomsMng {
 	String t6ServiceView = "Service SoW6";
 	
 	public TacomsMng(){
+		Logger.init();
 		initMainWindow();
 		configureServiceWindow();
+	
 	}
 
 	public static void main(String[] args){
@@ -32,7 +36,14 @@ public class TacomsMng {
 		overview.addService(t6ServiceView,"Autoconnect", ServiceID.AUTOCONNECT, false);
 		overview.addService(t6ServiceView, "Sa_bgp", ServiceID.SA_BGP, false);
 		overview.addService(t6ServiceView, "NTP", ServiceID.NTP, false);
+		
+		
+		overview.addContainer("TACOMS LOG");
+		overview.getCanvas("TACOMS LOG").setLayout(new BoxLayout(overview.getCanvas("TACOMS LOG"), BoxLayout.PAGE_AXIS));
+		overview.getCanvas("TACOMS LOG").addLogger();
+		Logger.error("Must go HOME");
 		gui.addContentWindow(overview, "Overview");
+		Logger.status();
 	}
 	
 	

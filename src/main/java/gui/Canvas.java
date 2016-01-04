@@ -35,6 +35,14 @@ public class Canvas extends JXPanel{
     public void addRow(String serviceName, ServiceID serviceID, Boolean isServiceEnabled){
     	this.add(new ServiceRow(mng, serviceName, serviceID ,isServiceEnabled));
     }
+    
+    public void changeLayout(){
+    	
+    }
+    public void addLogger(){
+    	title.setPreferredSize(new Dimension(15,43));
+    	add(new Logger());
+    }
     private void addShadow(){
         DropShadowBorder shadow = new DropShadowBorder();
         shadow.setShadowColor(Color.BLACK);

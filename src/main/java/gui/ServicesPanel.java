@@ -19,7 +19,7 @@ public class ServicesPanel extends JPanel {
 	
 	public ServicesPanel(TacomsMng mng, String title){
 		this.mng = mng;
-		setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
+		setLayout(new FlowLayout(FlowLayout.LEADING, 30, 30));
 	}
 	
 	public void addService(String containerID,String servName, ServiceID ServiceId, Boolean isServiceEnabled ){
