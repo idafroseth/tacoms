@@ -7,6 +7,13 @@
   <version>1.0-SNAPSHOT</version>
   <name>tacoms Maven Webapp</name>
   <url>http://maven.apache.org</url>
+  <repositories>
+    <repository>
+        <id>local-maven-repo</id>
+        <url>file:///${project.parent.basedir}/src/main/resources/local-maven-repo</url>
+    </repository>
+</repositories>
+  
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -14,6 +21,30 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+    	<groupId>com.cisco.onep</groupId>
+ 	 	<artifactId>libonep-core-rel</artifactId>
+ 		<version>1.3.0.181</version>
+    </dependency>
+    
+     <dependency>
+    	<groupId>org.apache.thrift</groupId>
+ 	 	<artifactId>libthrift</artifactId>
+ 		<version>0.6.1</version>
+    </dependency>
+    
+    <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-log4j13</artifactId>
+		<version>1.0.1</version>
+	</dependency>
+	
+	<dependency>
+		<groupId>org.swinglabs</groupId>
+		<artifactId>swingx</artifactId>
+		<version>1.6.1</version>
+	</dependency>
   </dependencies>
   <build>
     <finalName>tacoms</finalName>
