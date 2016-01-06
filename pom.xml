@@ -7,6 +7,7 @@
   <version>1.0-SNAPSHOT</version>
   <name>tacoms Maven Webapp</name>
   <url>http://maven.apache.org</url>
+
   <repositories>
     <repository>
         <id>local-maven-repo</id>
@@ -34,10 +35,23 @@
  		<version>0.6.1</version>
     </dependency>
     
-    <dependency>
+	
+	  <dependency>
 		<groupId>org.slf4j</groupId>
-		<artifactId>slf4j-log4j13</artifactId>
-		<version>1.0.1</version>
+		<artifactId>slf4j-api</artifactId>
+		<version>1.7.13</version>
+	</dependency>
+	
+	  <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-simple</artifactId>
+		<version>1.7.13</version>
+	</dependency>
+	
+  <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>jcl-over-slf4j</artifactId>
+		<version>1.7.13</version>
 	</dependency>
 	
 	<dependency>

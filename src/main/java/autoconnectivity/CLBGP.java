@@ -8,10 +8,10 @@ import connect.*;
 
 public class CLBGP {
 	VtyService vtyService6;
-	Logger logger; 
+	//Logger logger; 
 	CiscoCLI cli = new CiscoCLI();
-	public CLBGP(Logger l){
-		this.logger = l;
+	public CLBGP(){
+		//this.logger = l;
 	}
 	public void configure(String[] hexArray, NetworkElement ne){
 		try {

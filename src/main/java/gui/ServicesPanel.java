@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -16,10 +17,16 @@ public class ServicesPanel extends JPanel {
 	
 	TacomsMng mng;
 	HashMap<String, Canvas> canvases = new HashMap<String, Canvas>();
+	JPanel contentPane = new JPanel();
 	
 	public ServicesPanel(TacomsMng mng, String title){
 		this.mng = mng;
-		setLayout(new FlowLayout(FlowLayout.LEADING, 30, 30));
+		setLayout(new BorderLayout());
+		
+		
+		contentPane.setLayout(new FlowLayout(FlowLayout.LEADING, 30, 30));
+		add(new ConnectRow(mng), BorderLayout.PAGE_START);
+		add(contentPane,BorderLayout.CENTER);
 	}
 	
 	public void addService(String containerID,String servName, ServiceID ServiceId, Boolean isServiceEnabled ){
@@ -30,7 +37,7 @@ public class ServicesPanel extends JPanel {
 		Canvas can = new Canvas(mng, id);
 		can.setForeground(Color.WHITE);
 		canvases.put(id, can);
-		this.add(can);
+		contentPane.add(can);
 		
 	}
 	public HashMap<String, Canvas> getCanvases(){

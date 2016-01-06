@@ -3,16 +3,20 @@ package manager;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import com.cisco.onep.core.exception.OnepException;
+
 import gui.Logger;
 import gui.MainWindow;
 import gui.ServiceID;
 import gui.ServicesPanel;
+import model.Router;
 
 public class TacomsMng {
 	
 	MainWindow gui;
 	ServicesPanel overview;
 	String t6ServiceView = "Service SoW6";
+	Router router;
 	
 	public TacomsMng(){
 		Logger.init();
@@ -39,19 +43,43 @@ public class TacomsMng {
 		
 		
 		overview.addContainer("TACOMS LOG");
-		overview.getCanvas("TACOMS LOG").setLayout(new BoxLayout(overview.getCanvas("TACOMS LOG"), BoxLayout.PAGE_AXIS));
+		overview.getCanvas("TACOMS LOG");
 		overview.getCanvas("TACOMS LOG").addLogger();
-		Logger.error("Must go HOME");
+	//	Logger.error("Must go HOME");
 		gui.addContentWindow(overview, "Overview");
-		Logger.status();
+		//Logger.status("Hello");
 	}
 	
 	
+	public void connect(String ip, String userName, String pwd){
+		try {
+			router = new Router(ip, userName, pwd, "TACOMS");
+			router.connect("TACOMS");
+			
+		} catch (OnepException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public boolean isRouterConnected(){
+		if(router == null){
+			return false;
+		}
+		return router.getNetworkElement().isConnected();
+	}
 	
 	public void serviceButtonClicked(String id){
 		String en = "_ENABLE";
 		String dis = "_DISABLE";
 		if(id.equals(ServiceID.AUTOCONNECT + en)){
+			if(!isRouterConnected()){
+				
+			}
+			else{
+				
+			}
 			System.out.println("AUTOCONF_ENABLE");
 			
 		}

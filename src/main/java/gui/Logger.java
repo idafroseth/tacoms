@@ -3,6 +3,7 @@ package gui;
 import java.awt.Color;
 import java.awt.Dimension;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -19,6 +20,7 @@ public class Logger extends JPanel{
 	JTextPane ln = new JTextPane();
 
 	public Logger(){
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(Log);
 	}
 	
@@ -33,28 +35,28 @@ public class Logger extends JPanel{
 
 	}
 	
-	public static void error(String errorMsg){
+	public static void error(String errorMsg , String localized){
 		try
 		{
 			  SimpleAttributeSet error = new SimpleAttributeSet();
 			  StyleConstants.setForeground(error, Color.red);
 		//    doc.insertString(0, "Start of text\n", null );
 			//Strig keyword;
-			String errorMessage = "\n"+ "ERROR - " +errorMsg;
+			String errorMessage = "\n"+localized+  "ERROR - " +errorMsg;
 			StyledDocument doc = Log.getStyledDocument();
 			doc.insertString(15,errorMessage, error );
 		}
 		catch(Exception e) { System.out.println(e); }
 	}
 	
-	public static void status(){
+	public static void info(String info){
 		try
 		{
 			  SimpleAttributeSet status = new SimpleAttributeSet();
 			  StyleConstants.setForeground(status, Color.blue);
 		//    doc.insertString(0, "Start of text\n", null );
 			//Strig keyword;
-			String errorMessage = "\n"+ "STATUS - " ;
+			String errorMessage = "\n"+ "INFO - " + info ;
 			StyledDocument doc = Log.getStyledDocument();
 			doc.insertString(15,errorMessage, status );
 		}
