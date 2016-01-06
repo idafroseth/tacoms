@@ -15,8 +15,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import manager.TacomsMng;
+import model.ServiceID;
 
-public class ServiceRow extends JPanel implements ActionListener{
+public class ServiceRow extends JPanel{
 	TacomsMng mng;
 	JLabel serviceLable;
 	JButton enableButton = new JButton("Enable");
@@ -57,16 +58,23 @@ public class ServiceRow extends JPanel implements ActionListener{
 		this.serviceLable = new JLabel(serviceName);
 		this.serviceLable.setPreferredSize(new Dimension(100, 20));
 	}
-	private void configureButtons(TacomsMng mng, String serviceName, ServiceID serviceID, Boolean isServiceEnabled){
-		String enableID = serviceID+"_ENABLE";
-		String disableID = serviceID + "_DISABLE";
+	private void configureButtons(final TacomsMng mng, String serviceName, ServiceID serviceID, Boolean isServiceEnabled){
+		enableButton.setActionCommand(serviceID.toString());
+		disableButton.setActionCommand(serviceID.toString());
 		
-		enableButton.setActionCommand(enableID);
-		disableButton.setActionCommand(disableID);
+		enableButton.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				serviceEnabled(mng.enableService(e.getActionCommand()));
+			}
+		});
 		
-		enableButton.addActionListener(this);
-		disableButton.addActionListener(this);
-		
+		disableButton.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				serviceEnabled(mng.disableService(e.getActionCommand()));
+			}
+		});
 		serviceEnabled(isServiceEnabled);
 	}
 	
@@ -76,10 +84,5 @@ public class ServiceRow extends JPanel implements ActionListener{
 	}
 
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		mng.serviceButtonClicked(e.getActionCommand());
-		serviceEnabled(e.getActionCommand().contains("ENABLE"));
-	}
 
 }

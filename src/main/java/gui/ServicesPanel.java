@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import manager.TacomsMng;
+import model.ServiceID;
 
 public class ServicesPanel extends JPanel {
 	

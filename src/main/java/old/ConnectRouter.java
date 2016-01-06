@@ -1,4 +1,4 @@
-package connect;
+package old;
 
 //Hvis vi ønsker å kunne kjøre programmet uten konsoll og ønsker et brukergrensenitt maa de nedenforstående pakkene importeres
 //import java.awt.Dimension;
@@ -40,6 +40,9 @@ import com.cisco.onep.element.SessionConfig.SessionTransportMode;
 import com.cisco.onep.element.SessionHandle;
 import com.cisco.onep.interfaces.InterfaceFilter;
 import com.cisco.onep.interfaces.InterfaceStatus.InterfaceState;
+
+import model.TLSPinningHandler;
+
 import com.cisco.onep.interfaces.NetworkInterface;
 
 import java.util.Scanner;

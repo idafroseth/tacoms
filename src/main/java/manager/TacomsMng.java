@@ -1,15 +1,17 @@
 package manager;
 
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 
 import com.cisco.onep.core.exception.OnepException;
 
 import gui.Logger;
 import gui.MainWindow;
-import gui.ServiceID;
 import gui.ServicesPanel;
 import model.Router;
+import model.ServiceID;
+import serviceMonitor.AutoConnectivityMonitor;
+import serviceMonitor.DialPeerMonitor;
+import serviceMonitor.SABGPMonitor;
 
 public class TacomsMng {
 	
@@ -17,11 +19,16 @@ public class TacomsMng {
 	ServicesPanel overview;
 	String t6ServiceView = "Service SoW6";
 	Router router;
+	Thread autoconnectMonitor; 
+	Thread saBGPMonitor; 
+	Thread dialPeerMonitor;
 	
 	public TacomsMng(){
 		Logger.init();
 		initMainWindow();
 		configureServiceWindow();
+
+		
 	
 	}
 
@@ -38,16 +45,13 @@ public class TacomsMng {
 		this.overview = new ServicesPanel(this, "Overview");
 		overview.addContainer(t6ServiceView);
 		overview.addService(t6ServiceView,"Autoconnect", ServiceID.AUTOCONNECT, false);
-		overview.addService(t6ServiceView, "Sa_bgp", ServiceID.SA_BGP, false);
-		overview.addService(t6ServiceView, "NTP", ServiceID.NTP, false);
-		
+		overview.addService(t6ServiceView, "SA_BGP", ServiceID.SA_BGP, false);
+		overview.addService(t6ServiceView, "DIALPEER", ServiceID.DIALPEER, false);
 		
 		overview.addContainer("TACOMS LOG");
 		overview.getCanvas("TACOMS LOG");
 		overview.getCanvas("TACOMS LOG").addLogger();
-	//	Logger.error("Must go HOME");
 		gui.addContentWindow(overview, "Overview");
-		//Logger.status("Hello");
 	}
 	
 	
@@ -55,6 +59,9 @@ public class TacomsMng {
 		try {
 			router = new Router(ip, userName, pwd, "TACOMS");
 			router.connect("TACOMS");
+			autoconnectMonitor = new AutoConnectivityMonitor(router);
+			saBGPMonitor = new SABGPMonitor(router);
+			dialPeerMonitor = new DialPeerMonitor(router);
 			
 		} catch (OnepException e) {
 			// TODO Auto-generated catch block
@@ -67,34 +74,54 @@ public class TacomsMng {
 		if(router == null){
 			return false;
 		}
+		if(router.getNetworkElement() == null){
+			return false;
+		}
 		return router.getNetworkElement().isConnected();
 	}
 	
-	public void serviceButtonClicked(String id){
-		String en = "_ENABLE";
-		String dis = "_DISABLE";
-		if(id.equals(ServiceID.AUTOCONNECT + en)){
-			if(!isRouterConnected()){
-				
+	public boolean enableService(String id){
+		if(!isRouterConnected()){
+			Logger.error("Tried to start a service, but you are not connected");
+			return false;
+		}
+		else if(id.equals(ServiceID.AUTOCONNECT.toString())){
+			autoconnectMonitor.start();
+			Logger.info("Started autoconnectMonitor");
+		}
+		else if(id.equals(ServiceID.SA_BGP.toString())){
+			saBGPMonitor.start(); 
+			Logger.info("Started saBGPMonitor");
+		}
+		else if(id.equals(ServiceID.DIALPEER.toString())){
+			if(!saBGPMonitor.isAlive()){
+				JOptionPane.showMessageDialog(gui, "You have to start SA_BGP before DialPeer.");
+			}else{
+				dialPeerMonitor.start();
+				Logger.info("Started DialpeerMonitor");
 			}
-			else{
-				
-			}
-			System.out.println("AUTOCONF_ENABLE");
-			
+		}		
+		return true;
+	}
+	
+	public boolean disableService(String id){
+		if(router == null){
+			Logger.error("Tried to stop a service, but you are not connected");
+			return false;
 		}
-		else if(id.equals(ServiceID.AUTOCONNECT+dis)){
-			System.out.println("DISABLE_AUTOCONF");
+		else if(id.equals(ServiceID.AUTOCONNECT.toString())){
+			Logger.info("Trying to disable AUTOCONN");
+			autoconnectMonitor.interrupt();
+			Logger.info("AUTOCONN disabled");
 		}
-		else if(id.equals(ServiceID.SA_BGP+en)){
-			System.out.println("ENBALE_SA");
+		else if(id.equals(ServiceID.SA_BGP.toString())){
+			Logger.info("Trying to disable SA_BGP");
+			saBGPMonitor.interrupt(); 
+			Logger.info("SA_BGP disbled");
 		}
-		else if(id.equals(ServiceID.SA_BGP+dis)){
-			System.out.println("DISABLE_SA");
-		}
-		else if(id.equals(ServiceID.NTP+en)){
-			System.out.println("ENABLE NTP");
-		}
-		
+		else if(id.equals(ServiceID.DIALPEER.toString())){
+			dialPeerMonitor.interrupt();
+		}		
+		return true;
 	}
 }

@@ -1,7 +1,6 @@
-package co_routing;
+package old;
 
-import connect.ConnectRouter;
-import connect.CiscoCLI;
+import model.CiscoCLI;
 
 import com.cisco.onep.routing.RIB;
 import com.cisco.onep.vty.VtyService;
@@ -260,7 +259,6 @@ public class CORouting extends ConnectRouter{
 				
 				while(scin.hasNextLine()){
 					if(line.contains(cli.NOCOBGP)){
-//						System.out.println("Continuing: " +line);
 						line = scin.nextLine();
 						continue;
 					}
@@ -273,40 +271,28 @@ public class CORouting extends ConnectRouter{
 						String[] dpIDs = lineWords[2].split(":");
 						dialPeer = dpIDs[3] + dpIDs[4];
 					}else{
-//						System.out.println("Continuing: " +line);
 						line = scin.nextLine();
 						continue;
 					}
 					line = scin.nextLine();
-					//System.out.println(line);
 					while(!line.contains("FD00")){
 						
 						if(line.contains("::FFFF:")){
 							String[] lineWords = line.split("\\s+");
-//							System.out.println("Discovering nextHOP: "+ line);
-//							System.out.println("Discovering lineword: "+ lineWords[1]);
 							if(line.contains("*")){
 								nextHop = lineWords[2].substring(7);
 							}
 							else{
 								nextHop = lineWords[1].substring(7);
 							}
-							//System.out.println("Discovering nextHOP: "+ line);
-							//System.out.println("Extracting: " + line.split("\\s+")[1].substring(7));
 							nextHopList.add(nextHop);
 						}
 						if(!scin.hasNextLine()){
 							break;
 						}
-						
 						line = scin.nextLine();
-//						System.out.println("!line.contains(FD00:) "+ !line.contains("FD00:"));
-						
 					}
 					midlDP.put(dialPeer, nextHopList);
-//					getLogger().info("adding: "+dialPeer +" with best hop = "+ nextHopList);
-					//System.out.println("Adding dialPeer With Number: " +dialPeer);
-					//System.out.println("with nextHopList: " +nextHopList);
 				}
 			
 			String bestNextHop = null;
@@ -314,18 +300,14 @@ public class CORouting extends ConnectRouter{
 				ArrayList<String> nextHops = midlDP.get(key);
 				for(String nh : nextHops){
 					bestNextHop = nh;
-					//System.out.println("Comparing: " + key.substring(3,5) + " with " + nh.substring(0,2));
 					if(key.substring(3,5).equals(nh.substring(0,2))){
 						bestNextHop = nh;
 						break;
 					}	
 				}
-				//System.out.println(bestNextHop);
-//				 getLogger().info("adding: "+key +" with best hop = "+ bestNextHop);
 				if(bestNextHop != null){
 					bgpList.put(key,bestNextHop);
 				}
-		
 			}
 		}
 			
@@ -333,11 +315,9 @@ public class CORouting extends ConnectRouter{
 			// TODO Auto-generated catch block
 			 e.printStackTrace();
 		}
-//		getLogger().info("**********DONE listBGPpeers**********");
 		for(String key : bgpList.keySet()){
 			getLogger().info("NewDialPeers has : "+ key + " with nextHop: "+ bgpList.get(key));
 		}
-			
 		return bgpList;
 	}
 	

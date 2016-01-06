@@ -17,6 +17,7 @@ import org.jdesktop.swingx.JXPanel;
 import org.jdesktop.swingx.border.DropShadowBorder;
 
 import manager.TacomsMng;
+import model.ServiceID;
 
 public class Canvas extends JXPanel{
 

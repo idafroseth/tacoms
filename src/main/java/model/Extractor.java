@@ -1,7 +1,7 @@
 /**
  * 
  */
-package extractor;
+package model;
 
 import java.net.InetAddress;
 import org.slf4j.*;
@@ -52,7 +52,7 @@ public class Extractor {
 	}
 
 	//Henter ut ndvendig info fra en ipv6 addr og logger dette i en Array[]: 
-	public String[] hexExtractor(InetAddress ipv6Adr, Logger l ){
+	public String[] hexExtractor(InetAddress ipv6Adr){
 		String[] hexArray = ipv6Adr.toString().split(":");
 		if(hexArray.length>0){
 			this.routeType = hexArray[1]+"";

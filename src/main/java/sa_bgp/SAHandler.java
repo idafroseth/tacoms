@@ -1,6 +1,8 @@
 package sa_bgp;
-import connect.*;
-import extractor.*;
+import old.*;
+import model.CiscoCLI;
+import model.Extractor;
+import old.ConnectRouter;
 
 import com.cisco.onep.core.exception.OnepException;
 import com.cisco.onep.element.NetworkElement;
@@ -13,7 +15,7 @@ import java.net.*;
 
 //import org.slf4j.Logger;
 
-public class SAHandler extends ConnectRouter {
+public class SAHandler extends ConnectRouter implements Runnable {
 	private Extractor extractor6 = new Extractor();
 	private HashMap<String,String> bgpPeers = new HashMap();
 	private ArrayList<String> ripList = new ArrayList();
@@ -101,7 +103,7 @@ public class SAHandler extends ConnectRouter {
 	        for (String s: ripList){
 	        	String[] ipAdr = s.split("/");
 	        	InetAddress ipv6adr = InetAddress.getByName(ipAdr[0]);
-	        	String[] data = extractor6.hexExtractor(ipv6adr, getLogger());
+	        	String[] data = extractor6.hexExtractor(ipv6adr);
 	        	//i metoden benyttes ikke routeType til noe for denne SABGP og vi setter denne som placeholder for nextHop.
 	        	data[0] = nextHop;
 	        	ripListData.add(data);
@@ -248,5 +250,11 @@ public class SAHandler extends ConnectRouter {
 	}
 	public void clearBgpPeers(){
 		this.bgpPeers = new HashMap();
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 }
