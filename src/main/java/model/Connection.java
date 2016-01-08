@@ -82,7 +82,7 @@ public class Connection {
 			vty = new VtyService(getNetworkElement());
 			vty.open();
 		}catch (OnepException | InterruptedException  e) {
-			System.out.println("Could not open VTY SERVICE!!");
+			Logger.error("Could not open VTY SERVICE!!");
 		}
 	}
 	/**
@@ -104,7 +104,7 @@ public class Connection {
 			// TODO Auto-generated method stub
 			while(true){
 				try {
-					if(!networkElement.isConnected()){
+					if(!getNetworkElement().isConnected()){
 						Logger.error("LOST CONNECTION!");
 					}
 					Thread.sleep(1000*5);

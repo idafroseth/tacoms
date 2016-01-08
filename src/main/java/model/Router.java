@@ -48,7 +48,7 @@ public class Router extends Connection {
 			}
 			String currentDialPeers = vty.write("show dial-peer voice summary");
 			Scanner scin = new Scanner(currentDialPeers);
-			// System.out.println(currentDialPeers);
+			// Logger.info(currentDialPeers);
 			while (scin.hasNextLine()) {
 				String line = scin.nextLine();
 				if (line.contains("syst")) {
@@ -64,7 +64,7 @@ public class Router extends Connection {
 					String data[] = new String[2];
 					data[0] = nextHop;
 					data[1] = word[0];
-					// System.out.println("putting into existing dialpeers:
+					// Logger.info("putting into existing dialpeers:
 					// "+dstPattern + " with data " + data[0]+ " and "
 					// +data[1]);
 					dialPeers.put(dstPattern, data);
@@ -92,7 +92,7 @@ public class Router extends Connection {
 		L3UnicastRIBFilter filter = new L3UnicastRIBFilter();
 		filter.setOwnerType(routeType);
 
-		System.out.println("adding RIB listener...");
+		Logger.info("adding RIB listener...");
 		int RIBRouteListenerEventHandle = (Routing.getInstance(getNetworkElement()).getRib()).addRouteStateListener(
 				RIBRouteListener, aL3UnicastScope, filter,
 				RouteStateListenerFlag.TRIGGER_INITIAL_WALK, null);
@@ -101,37 +101,103 @@ public class Router extends Connection {
 
 	public void removeRIBRouteListener(int eventHandler)
 			throws OnepIllegalArgumentException, OnepRemoteProcedureException, OnepConnectionException {
-		System.out.println("removing RIB listener...");
+		Logger.info("removing RIB listener...");
 		(Routing.getInstance(getNetworkElement()).getRib()).removeRouteStateListener(eventHandler);
 	}
 
 	////////////////////////////// BEGIN AUTOCON
 	////////////////////////////// METHODS//////////////////////////////
-	public boolean addMasterNode(String[] octett) {
+	public synchronized HashMap<String, String> getRIPngPeers(){
+		HashMap<String, String> ripPeers = new HashMap<String, String>();
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
+			String routeTable = vty.write("show ipv6 route rip");
+			Scanner scin = new Scanner(routeTable);
+			while (!scin.nextLine().contains("LISP")){
+				if(!scin.hasNextLine()){
+					return ripPeers;
+				}
+			}
+			
+			while (scin.hasNextLine()) {
+				String line = scin.nextLine();
+				if(line.contains("FD00")){
+					String[] words = line.split("\\s+");
+					String announcedIPv6 = words[0];
+					String nextHop = scin.nextLine().split("\\s+")[3];
+					Logger.info("Found RIPng: "+ announcedIPv6 + ", "  + nextHop);
+					ripPeers.put(announcedIPv6, nextHop);
+				}
+			}
+			
+		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
+			e1.printStackTrace();
+		}
+		return ripPeers;
+	}
+	public synchronized HashMap<String, String> getBgpPeers(){
+		HashMap<String, String> bgpPeers = new HashMap<String, String>();
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			String bgpTable = vty.write("sh run | include neighbor");
+			Scanner scin = new Scanner(bgpTable);
+			String line;
+			String[] words;
+			
+			outer:
+			while(scin.hasNextLine()){
+				line = scin.nextLine();
+				if(line.contains("log-neighbor-changes")){
+					continue outer;
+				}
+				if(line.contains("remote-as")){
+					words = line.split("\\s+");
+					Logger.info("Discover BGP peer: " + words[1] + ", " + words[3]);
+					bgpPeers.put(words[1], words[3]);
+				}
+			}
+		
+		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
+			e1.printStackTrace();
+		}
+		return bgpPeers;
+	}
+	
+	
+	public synchronized boolean addMasterNode(String[] octett) {
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			
+			if(vty.write("show run interface tun " + octett[1] + " | include 111." + octett[1] + "." + octett[2] + "." + octett[3]).length()>2){
+				Logger.info("The tunnel already exists do nothing");
+				return true;
+			}
 
-			System.out.println("We are a masternode");
+			Logger.info("We are a masternode");
 			String phyDest = "111." + octett[1] + "." + octett[2] + "." + octett[3];
 			String iPv6Adr = "FD00:202::2F:1:114.47." + octett[1] + "." + Integer.parseInt(octett[2]) * 4 + "/127";
-			System.out.println("The tunnel did not exist so we are about to create the tunnel");
+			Logger.info("The tunnel did not exist so we are about to create the tunnel");
 
 			vty.write(CiscoCLI.CONFT);
 			vty.write("crypto isakmp key TAC9MS! address " + phyDest);
-			System.out.println("interface tunnel" + octett[1]);
+			Logger.info("interface tunnel" + octett[1]);
 			vty.write("interface tunnel" + octett[1]);
 			vty.write("ip address " + "114.47." + octett[1] + "." + Integer.parseInt(octett[2]) * 4 + 2
 					+ " 255.255.255.252");
 			vty.write("tunnel destination " + phyDest);
 			vty.write("tunnel source 111.47.1.1");
 			vty.write("ipv6 address " + iPv6Adr);
-			System.out.println("*************************************ipv6 address " + iPv6Adr);
-			System.out.println("**************************");
+			Logger.info("*************************************ipv6 address " + iPv6Adr);
+			Logger.info("**************************");
 			vty.write(CiscoCLI.ENIPV6);
 			vty.write("ipv6 rip TACOMS enable");
-			vty.write("tunnel protection ipsec profile TACOMS");
+			vty.write("tunnel protection ipsec profile ipsec2000");
 
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
@@ -144,7 +210,7 @@ public class Router extends Connection {
 			vty.write("ipv6 prefix-list " + octett[1] + " permit " + iPv6Adr);
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");
 			vty.write(CiscoCLI.END);
-			System.out.println("You have just created a new Tunnel with ID " + octett[1]);
+			Logger.info("You have just created a new Tunnel with ID " + octett[1]);
 
 		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
 			e1.printStackTrace();
@@ -152,12 +218,16 @@ public class Router extends Connection {
 		return true;
 	}
 
-	public boolean addSlaveNode(String[] octett) {
+	public synchronized boolean addSlaveNode(String[] octett) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
-			System.out.println("We are a slave node");
+			if(vty.write("show run interface tun " + octett[1] + " | include 111." + octett[1] + "." + octett[2] + "." + octett[3]).length()>2){
+				Logger.info("The tunnel already exists do nothing");
+				return true;
+			}
+			Logger.info("We are a slave node");
 			String phyDest = "111." + octett[1] + "." + octett[2] + "." + octett[3];
 			vty.write(CiscoCLI.CONFT);
 			vty.write("crypto isakmp key TAC9MS! address " + phyDest);
@@ -167,27 +237,29 @@ public class Router extends Connection {
 			vty.write("tunnel source 111.47.1.1");
 			vty.write(CiscoCLI.ENIPV6);
 			vty.write("ipv6 rip TACOMS enable");
-			vty.write("tunnel protection ipsec profile TACOMS");
-			vty.write(CiscoCLI.END);
-			vty.write(CiscoCLI.CONFT);
-			vty.write(CiscoCLI.GORIPV6);
-			vty.write("distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]);
+			vty.write("tunnel protection ipsec profile ipsec2000");
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:510:0:2:2F:1:2F01:1/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:511::2F:1:2F01:2/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");
+			
 			vty.write(CiscoCLI.END);
-			System.out.println("You have just created a new Tunnel with ID " + octett[1]);
+			vty.write(CiscoCLI.CONFT);
+			vty.write(CiscoCLI.GORIPV6);
+			vty.write("distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]);
+			vty.write(CiscoCLI.END);
+			Logger.info("You have just created a new Tunnel with ID " + octett[1]);
 
 		} catch (InterruptedException | ExceptionIDL | OnepException e1) {
 			e1.printStackTrace();
+			Logger.error(e1.getMessage());
 			return false;
 		}
 		return true;
 	}
 
-	public boolean removeNeighbor(String[] octett) {
+	public synchronized boolean removeNeighbor(String[] octett) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -197,16 +269,16 @@ public class Router extends Connection {
 			 */
 			String phyDest = "111." + octett[1] + "." + octett[2] + "." + octett[3];
 
-			System.out.println("The route went down so we are about to remove the tunnel and IPsec config");
+			Logger.info("The route went down so we are about to remove the tunnel and IPsec config");
 			vty.write(CiscoCLI.CONFT);
-			vty.write("no interface tunnel " + octett[1]);
-			vty.write("no crypto isakmp key TAC9MS! address " + phyDest);
-			vty.write("no ipv6 prefix-list " + octett[1]);
-			vty.write(CiscoCLI.GORIPV6);
-			vty.write("no distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]);
-			vty.write(CiscoCLI.END);
+			Logger.info(vty.write("no interface tunnel " + octett[1]));
+			Logger.info(vty.write("no crypto isakmp key TAC9MS! address " + phyDest));
+			Logger.info(vty.write("no ipv6 prefix-list " + octett[1]));
+			Logger.info(vty.write(CiscoCLI.GORIPV6));
+			Logger.info(vty.write("no distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]));
+			Logger.info(vty.write(CiscoCLI.END));
 
-			System.out.println("Is Open after removing tunnel? " + vty.isOpen());
+			Logger.info("Is Open after removing tunnel? " + vty.isOpen());
 
 			return true;
 		} catch (Exception T) {
@@ -215,7 +287,7 @@ public class Router extends Connection {
 		}
 	}
 	
-	public void addGRETunnel(String[] hexArray){
+	public synchronized void addGRETunnel(String[] hexArray){
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -228,7 +300,7 @@ public class Router extends Connection {
 				vty.write(CiscoCLI.END);
 			}
 		} catch (Exception e) {
-			System.out.println(e.getLocalizedMessage());
+			Logger.error(e.getLocalizedMessage());
 		}
 
 	}
@@ -237,7 +309,7 @@ public class Router extends Connection {
 	}
 	
 	
-	public void addBGPv4Neighbor(String[] hexArray) {
+	public synchronized void addBGPv4Neighbor(String[] hexArray) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -246,41 +318,42 @@ public class Router extends Connection {
 			String routeType = hexArray[0];
 			String ipv4Peer = hexArray[3];
 			String ipv4TuAdress = hexArray[4];
+			String neighASN = hexArray[1] + "." + hexArray[2];
+			if(vty.write("show run | sec neighbor " + ipv4Peer + " remote-as " + neighASN).length()<4){
 
-				System.out.println("It is a BGP prefix so configure the BGP table to peer " + ipv4Peer + " with ASN "
+				Logger.info("It is a BGP prefix so configure the BGP table to peer " + ipv4Peer + " with ASN "
 						+ hexArray[1] + "." + hexArray[2]);
 
-				String neighASN = hexArray[1] + "." + hexArray[2];
+		
 				String staticIPRoute = "ip route " + ipv4Peer + " 255.255.255.255 tu " + hexArray[1];
-				String setBGPRemoteAs = "neighbor " + ipv4Peer + " remote-as " + neighASN;
-				String setBGPMultihop = "neighbor " + ipv4Peer + " ebgp-multihop 4";
-				String activatePeer = "neighbor " + ipv4Peer + " activate";
 				vty.write(CiscoCLI.END);
 				vty.write(CiscoCLI.CONFT);
-				System.out.println("******IS THIS CORRECT*******: " + staticIPRoute);
+				Logger.info("******IS THIS CORRECT*******: " + staticIPRoute);
 				vty.write(staticIPRoute);
-				vty.write("neighbor " + ipv4Peer + " remote-as " + neighASN + " update-so 47");
+				//vty.write();
 				vty.write(CiscoCLI.GOCLBGP);
-				vty.write(setBGPRemoteAs);
+				vty.write("neighbor " + ipv4Peer + " remote-as " + neighASN);
+				vty.write("neighbor " + ipv4Peer + " ebgp-multihop 4");
+				vty.write("neighbor " + ipv4Peer + " update-source Loopback47" );
 				vty.write(CiscoCLI.GOBGPV4);
-				vty.write(activatePeer);
-				vty.write(setBGPMultihop);
+				vty.write("neighbor " + ipv4Peer + " activate");
 
 				vty.write(CiscoCLI.END);
+			}
 
 		} catch (Exception e) {
-			System.out.println(e.getLocalizedMessage());
+			Logger.info(e.getLocalizedMessage());
 		}
 	}
 	
 	
-	public void addMulicastNeighbor(String[] hexArray) {
+	public synchronized void addMulicastNeighbor(String[] hexArray) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
 			String ipv4Peer = hexArray[3];
-			System.out.println("It is a msdp prefix so configure multicast to peer " + ipv4Peer);
+			Logger.info("It is a msdp prefix so configure multicast to peer " + ipv4Peer);
 			String setMSDPpeer = "ip msdp peer " + ipv4Peer + " connect-source loop 472";
 			vty.write(CiscoCLI.CONFT);
 			vty.write(setMSDPpeer);
@@ -291,24 +364,24 @@ public class Router extends Connection {
 	}
 	
 	
-	public void removeMulicastNeighbor(String[] hexArray) {
+	public synchronized void removeMulicastNeighbor(String[] hexArray) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
 			String ipv4Peer = hexArray[3];
-			System.out.println("we are about to remove msdp");
+			Logger.info("we are about to remove msdp");
 			vty.write(CiscoCLI.CONFT);
 			vty.write("no ip msdp peer " + ipv4Peer + " connect-source tu " + hexArray[1]);
 			vty.write(CiscoCLI.END);
-			System.out.println("MSDP is removed");
+			Logger.info("MSDP is removed");
 		} catch (Exception e) {
-			System.out.println(e.getLocalizedMessage());
+			Logger.error(e.getLocalizedMessage());
 		}
 	
 	}
 
-	public void removeBGPv4Neighbor(String[] hexArray) {
+	public synchronized void removeBGPv4Neighbor(String[] hexArray) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -328,7 +401,7 @@ public class Router extends Connection {
 			vty.write(CiscoCLI.END);
 
 		} catch (Exception e) {
-			System.out.println(e.getLocalizedMessage());
+			Logger.error(e.getLocalizedMessage());
 		}
 	}
 	/////////////////////////////// END AUTOCONN
@@ -341,7 +414,7 @@ public class Router extends Connection {
 	 * 
 	 * @return
 	 */
-	public ArrayList<String[]> getRipV6List() {
+	public synchronized ArrayList<String[]> getRipV6List() {
 		String nextHop = "";
 		ArrayList<String> ripList = new ArrayList<String>();
 		try {
@@ -385,7 +458,7 @@ public class Router extends Connection {
 	 * 
 	 * @return a HashMap containing IPaddress, NodeID
 	 */
-	public HashMap<String, String> getConfiguredBgpPeers() {
+	public synchronized HashMap<String, String> getConfiguredBgpPeers() {
 		HashMap<String, String> bgpPeers = new HashMap<String, String>();
 		try {
 			if (!vty.isOpen()) {
@@ -424,7 +497,7 @@ public class Router extends Connection {
 	 * @param data
 	 * @return
 	 */
-	public boolean addSABGPPeer(String[] data) {
+	public synchronized boolean addSABGPPeer(String[] data) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -444,7 +517,7 @@ public class Router extends Connection {
 			vty.write("neighbor " + data[3] + " route-map setNextHopIn out");
 			vty.write("neighbor " + data[3] + " soft-reconfiguration inbound");
 			vty.write(CiscoCLI.END);
-			System.out.println("Peering to: " + data[3] + " with ASN " + data[1] + "." + data[2]);
+			Logger.info("Peering to: " + data[3] + " with ASN " + data[1] + "." + data[2]);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (OnepException | ExceptionIDL e) {
@@ -460,7 +533,7 @@ public class Router extends Connection {
 	 *            the IP of the neighbor
 	 * @return
 	 */
-	public boolean saBGPRemove(String neighbor) {
+	public synchronized boolean saBGPRemove(String neighbor) {
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();
@@ -469,18 +542,18 @@ public class Router extends Connection {
 			String findIfStatic = vty.write("show run | include " + neighbor + " description staticSA");
 			String[] data = neighbor.split(".");
 			if (findIfStatic.contains("static")) {
-				System.out.println("Neighbor " + neighbor + " is configured static skip this peer");
+				Logger.info("Neighbor " + neighbor + " is configured static skip this peer");
 				return false;
 			}
 			if (cliTest.contains("% No such neighbor")) {
-				System.out.println("Denne eksisterer ikke som IPV4 - fjerner hele peeren");
+				Logger.info("Denne eksisterer ikke som IPV4 - fjerner hele peeren");
 				String ipRoute = vty.write("show run | include ip route " + neighbor);
 				vty.write(CiscoCLI.CONFT);
 				vty.write(CiscoCLI.GOSABGP);
 				vty.write("no neighbor " + neighbor);
-				System.out.println("no neighbor " + neighbor);
+				Logger.info("no neighbor " + neighbor);
 				vty.write("no " + ipRoute);
-				System.out.println("Fjerner statisk rute: no " + ipRoute);
+				Logger.info("Fjerner statisk rute: no " + ipRoute);
 			} else {
 				vty.write(CiscoCLI.CONFT);
 				vty.write(CiscoCLI.GOSABGP);
@@ -490,7 +563,7 @@ public class Router extends Connection {
 
 			vty.write("cli.END");
 		} catch (InterruptedException | OnepException | ExceptionIDL e) {
-			System.out.println("SA-BGP config -- CRASH");
+			Logger.error("SA-BGP config -- CRASH");
 			e.printStackTrace();
 		}
 		return true;
@@ -568,7 +641,7 @@ public class Router extends Connection {
 					String[] array = { bestNextHop, startHex.toString() };
 					if (midlDP.containsKey(dialPeerNr)) {
 						if (startHex > Integer.parseInt(midlDP.get(dialPeerNr)[1])) {
-							System.out.println(
+							Logger.info(
 									"Dialpeer nummer: " + dialPeerNr + "er bedre enn " + midlDP.get(dialPeerNr)[0]);
 							midlDP.put(dialPeerNr, array);
 							bgpList.put(dialPeerNr, bestNextHop);
@@ -596,7 +669,7 @@ public class Router extends Connection {
 	 */
 	public boolean removeDialPeer(String dialPeer) {
 		try {
-			// System.out.println(getNetworkElement());
+			// Logger.info(getNetworkElement());
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
@@ -635,7 +708,7 @@ public class Router extends Connection {
 		} catch (InterruptedException | OnepException | ExceptionIDL e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.out.println("Error with updatePeer");
+			Logger.info("Error with updatePeer");
 		}
 	}
 
@@ -649,7 +722,7 @@ public class Router extends Connection {
 	public boolean addDialPeer(String destPattern, String sipServer) {
 		int newTag = 30000;
 		for (int i = 30000; i < 30500; i++) {
-			// //System.out.println(!tagsTaken.contains(i));
+			// //Logger.info(!tagsTaken.contains(i));
 			if (dialpeerTagsTaken.add(i)) { // if its successfully added (true)
 				newTag = i;
 				break;
@@ -659,7 +732,7 @@ public class Router extends Connection {
 		for (int i = 0; i < antallPrikker; i++) {
 			destPattern += ".";
 		}
-		// System.out.println("DESTINATION PATTERN:" + destPattern);
+		// Logger.info("DESTINATION PATTERN:" + destPattern);
 		try {
 			if (!vty.isOpen()) {
 				vtyOpen();

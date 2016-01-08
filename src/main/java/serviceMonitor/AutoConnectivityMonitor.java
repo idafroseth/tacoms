@@ -1,6 +1,7 @@
 package serviceMonitor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.cisco.onep.core.exception.OnepConnectionException;
 import com.cisco.onep.core.exception.OnepException;
@@ -41,40 +42,49 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 		while (true) {
 			Logger.info("Checking if there are new Autconn neighbors");
 			try {
-				Thread.sleep(10 * 1000);
+				Thread.sleep(5 * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				for (Integer ribListener : ribListeners) {
-					try {
-						router.removeRIBRouteListener(ribListener);
-					} catch (OnepIllegalArgumentException | OnepRemoteProcedureException | OnepConnectionException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
+				Logger.info("INTERRUPT IN AUTCONNECT");
+//				for (Integer ribListener : ribListeners) {
+//					try {
+//						router.removeRIBRouteListener(ribListener);
+//					} catch (OnepIllegalArgumentException | OnepRemoteProcedureException | OnepConnectionException e1) {
+//						// TODO Auto-generated catch block
+//						e1.printStackTrace();
+//					}
+//				}
 				return;
 			}
 		}
 	}
 
+	public void lookForNewPeer(){
+		HashMap<String, String> bgpPeers = router.getBgpPeers();
+		HashMap<String, String> ripPeers = router.getRIPngPeers();
+		for(String ripPeer : ripPeers.keySet()){
+		}
+	}
+	
+	
 	public void handleEvent(RIBRouteStateEvent event, Object clientData) {
 
 		L3UnicastRoute l3uRoute = (L3UnicastRoute) event.getRoute();
 		OwnerType rType = l3uRoute.getOwnerType();
 
 		RIB.RouteState state = event.getState();
-		System.out.println("RIBRouteStateEvent received...");
-		System.out.println("This is a " + rType + " route.");
-		System.out.println("Belongs to: " + l3uRoute.getPrefix().getAddress());
-		System.out.println("State: " + event.getState());
-		System.out.println("Scope: " + ((L3UnicastScope) event.getScope()).getAfi());
+		Logger.info("RIBRouteStateEvent received...");
+		Logger.info("This is a " + rType + " route.");
+		Logger.info("Belongs to: " + l3uRoute.getPrefix().getAddress());
+		Logger.info("State: " + event.getState());
+		Logger.info("Scope: " + ((L3UnicastScope) event.getScope()).getAfi());
 
 		// String rType = l3uRoute.getOwnerType().toString();
 		
 	////I AM CONFIGURING OWNER TYPE IN THE SET UP OF THE 	
 	//	if (rType.equals(OwnerType.RIP)) {
 			if (((L3UnicastScope) event.getScope()).getAfi() == AFIType.IPV4) {
-				System.out.println("----------------------START Configuring Tunnel---------------------------");
+				Logger.info("----------------------START Configuring Tunnel---------------------------");
 				String[] octett = extractor4.octettExtractor(l3uRoute.getPrefix().getAddress().toString());
 				if (state == RIB.RouteState.UP) {
 					if (Integer.parseInt(octett[1]) > 47) {
@@ -85,10 +95,10 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 				} else if (state == RIB.RouteState.DOWN) {
 					router.removeNeighbor(octett);
 				}
-				System.out.println("----------------------DONE Configuring Tunnel---------------------------");
+				Logger.info("----------------------DONE Configuring Tunnel---------------------------");
 			}else{
 				String[] data = extractor6.hexExtractor(l3uRoute.getPrefix().getAddress());
-				System.out.println("inside RIP configure wih " + data[0]);
+				Logger.info("inside RIP configure wih " + data[0]);
 				switch (Integer.parseInt(data[0])) {
 				case 202:
 					if (state.equals(RIB.RouteState.UP)) {
