@@ -1,5 +1,5 @@
 # Tacoms
-<h4>Pre-requists</h4>
+<h4>Prerequisites</h4>
   <ul>
     <li>Maven</li>
     <li>Java6</li>
