@@ -16,7 +16,7 @@ Open eclipse and run
 ```
 file-import-existing maven project
 ```
-Locate the file where the pom.xml in the newly added git folder.
+Locate the file where the pom.xml in the newly added git folder and click ok. Run maven install by using the dropdown becide the "Play" button. 
 
 <h4>Design</h4>
 The NOR TACOMS contains multiple services which are identified in the TACOMS profile. For now it implements the SOW-6 profile. Each services run in its own thread and is managed by a Manager which also handles all updates of the GuI. All interaction with the router is done in the Model module where you will find a router-class and the VTY operations.  
