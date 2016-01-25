@@ -48,7 +48,7 @@ public class SABGPMonitor extends Thread {
 		for (String[] data : ripListData) {
 			if (!configuredBgpPeers.containsKey(data[3])) {
 				// There is a new DialPeer so add it
-				System.out.println("adding bgp peer: " + data[3]);
+				Logger.info("adding bgp peer: " + data[3]);
 				router.addSABGPPeer(data);
 			}
 		}
@@ -65,7 +65,7 @@ public class SABGPMonitor extends Thread {
 				}
 			}
 			if (!exists) {
-				System.out.println("Trying to remove bgp peer: " + ipv4Peer);
+				Logger.info("Trying to remove bgp peer: " + ipv4Peer);
 				router.saBGPRemove(ipv4Peer);
 			}
 		}

@@ -71,6 +71,7 @@ public class Logger extends JPanel{
 			//Strig keyword;
 			String errorMessage = "\n"+sdf.format(new Date(System.currentTimeMillis())) + " - " + errorMsg;
 			StyledDocument doc = Log.getStyledDocument();
+			System.out.println(errorMsg);
 			doc.insertString(15,errorMessage, error );
 		}
 		catch(Exception e) { System.out.println(e); }
@@ -86,6 +87,7 @@ public class Logger extends JPanel{
 			String errorMessage = "\n"+sdf.format(new Date(System.currentTimeMillis())) + " - " + info ;
 			StyledDocument doc = Log.getStyledDocument();
 			doc.insertString(15,errorMessage, status );
+			System.out.println(info);
 		}
 		catch(Exception e) { System.out.println(e); }
 	}

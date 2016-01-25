@@ -55,7 +55,6 @@ public class MenuPanel extends JPanel {
 	private class MouseClickListener implements MouseListener{
 		JLabel hovered = new JLabel();
 
-		@Override
 		public void mouseClicked(MouseEvent e) {
 			// TODO Auto-generated method stub
 			JLabel button = (JLabel)e.getSource();
@@ -63,28 +62,24 @@ public class MenuPanel extends JPanel {
 			
 		}
 
-		@Override
 		public void mousePressed(MouseEvent e) {
 			
 			// TODO Auto-generated method stub
 			
 		}
 
-		@Override
 		public void mouseReleased(MouseEvent e) {
 			JLabel button = (JLabel)e.getSource();
 			setButtonAsActive(button);
 			mainWindow.changeCard(button.getName());	
 		}
 
-		@Override
 		public void mouseEntered(MouseEvent e) {
 			JLabel button = (JLabel)e.getSource();	
 			button.setBackground(new Color(238,238,238));
 			hovered = button; 
 		}
 
-		@Override
 		public void mouseExited(MouseEvent e) {
 			// TODO Auto-generated method stub
 			JLabel button = (JLabel)e.getSource();

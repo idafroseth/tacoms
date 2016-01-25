@@ -181,7 +181,7 @@ public class Router extends Connection {
 
 			Logger.info("We are a masternode");
 			String phyDest = "111." + octett[1] + "." + octett[2] + "." + octett[3];
-			String iPv6Adr = "FD00:202::2F:1:114.47." + octett[1] + "." + Integer.parseInt(octett[2]) * 4 + "/127";
+			String iPv6Adr = "FD00:202::2F:1:114.47." + octett[1] + "." + (Integer.parseInt(octett[2]) * 4+ 1) + "/127";
 			Logger.info("The tunnel did not exist so we are about to create the tunnel");
 
 			vty.write(CiscoCLI.CONFT);
@@ -198,6 +198,8 @@ public class Router extends Connection {
 			vty.write(CiscoCLI.ENIPV6);
 			vty.write("ipv6 rip TACOMS enable");
 			vty.write("tunnel protection ipsec profile ipsec2000");
+			vty.write("ip pim bsr-border");
+			vty.write("ip pim sparse-mode");
 
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
@@ -238,6 +240,8 @@ public class Router extends Connection {
 			vty.write(CiscoCLI.ENIPV6);
 			vty.write("ipv6 rip TACOMS enable");
 			vty.write("tunnel protection ipsec profile ipsec2000");
+			vty.write("ip pim bsr-border");
+			vty.write("ip pim sparse-mode");
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:510:0:2:2F:1:2F01:1/128");
@@ -293,12 +297,18 @@ public class Router extends Connection {
 				vtyOpen();
 			}
 			String ipv4TuAdress = hexArray[4];
+			Logger.info("--------------Updating Tunnel to "+hexArray[1] + " --------");
+			System.out.println(Integer.parseInt(hexArray[1]) + " is larger than " + CiscoCLI.MAINAS + " so update");
 			if ((Integer.parseInt(hexArray[1]) > CiscoCLI.MAINAS)) {
+				Logger.info("***Conf T ");
 				vty.write(CiscoCLI.CONFT);
 				vty.write("interface tunnel " + hexArray[1]);
-				vty.write("ip address " + ipv4TuAdress + " 255.255.255.252");
+				Logger.info("***interface tunnel" +hexArray[1] );
+				Logger.info("***ip address " + ipv4TuAdress+2 + " 255.255.255.252" );
+				vty.write("ip address " + ipv4TuAdress+2 + " 255.255.255.252");
 				vty.write(CiscoCLI.END);
 			}
+			Logger.info("--------------Done updating Tunnel to "+hexArray[1] + " --------");
 		} catch (Exception e) {
 			Logger.error(e.getLocalizedMessage());
 		}

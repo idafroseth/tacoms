@@ -98,13 +98,15 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 				Logger.info("----------------------DONE Configuring Tunnel---------------------------");
 			}else{
 				String[] data = extractor6.hexExtractor(l3uRoute.getPrefix().getAddress());
-				Logger.info("inside RIP configure wih " + data[0]);
+				Logger.info("inside RIP configure wih " + Integer.parseInt(data[0]));
 				switch (Integer.parseInt(data[0])) {
 				case 202:
 					if (state.equals(RIB.RouteState.UP)) {
+						Logger.info("Identified 202 UP");
 						router.addGRETunnel(data);
 					}
 					if (state.equals(RIB.RouteState.DOWN)) {
+						Logger.info("Identified 202 DOWN");
 						router.removeGRETunnel(data);
 					}
 					break;

@@ -28,7 +28,7 @@ public class ConnectRow extends JPanel{
 		userName.setPreferredSize( filedSize);
 		password.setPreferredSize( filedSize);
 		connect.addActionListener(new ActionListener(){
-			@Override
+			
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				mng.connect(ipAddress.getText(),userName.getText(),password.getText());	

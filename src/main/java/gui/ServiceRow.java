@@ -63,16 +63,16 @@ public class ServiceRow extends JPanel{
 		disableButton.setActionCommand(serviceID.toString());
 		
 		enableButton.addActionListener(new ActionListener(){
-			@Override
+
 			public void actionPerformed(ActionEvent e) {
 				serviceEnabled(mng.enableService(e.getActionCommand()));
 			}
 		});
 		
 		disableButton.addActionListener(new ActionListener(){
-			@Override
+
 			public void actionPerformed(ActionEvent e) {
-				serviceEnabled(mng.disableService(e.getActionCommand()));
+				serviceEnabled(!mng.disableService(e.getActionCommand()));
 			}
 		});
 		serviceEnabled(isServiceEnabled);
