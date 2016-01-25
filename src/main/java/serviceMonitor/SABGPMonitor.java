@@ -58,10 +58,13 @@ public class SABGPMonitor extends Thread {
 		 */
 		for (String ipv4Peer : configuredBgpPeers.keySet()) {
 			boolean exists = false;
+			Logger.info("Checking if " + ipv4Peer + " exists as an bgp peer");
+			outer:
 			for (String[] data : ripListData) {
+				
 				if (data[3].equals(ipv4Peer)) {
 					exists = true;
-					break;
+					break outer;
 				}
 			}
 			if (!exists) {

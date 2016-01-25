@@ -66,7 +66,8 @@ public class Extractor {
 		int lengde = bytes.length;
 		if(bytes.length>8){
 			this.IPv4Address = bytes[bytes.length-4] + "." + bytes[bytes.length-3] + "." + bytes[bytes.length-2] + "." + bytes[bytes.length-1];
-			this.IPv4AddressMinusEn = bytes[bytes.length-4] + "." + bytes[bytes.length-3] + "." + bytes[bytes.length-2] + "." + Integer.toString(bytes[bytes.length-1]-1);
+		//changed the IPv4Address minus one to pluss 1
+			this.IPv4AddressMinusEn = bytes[bytes.length-4] + "." + bytes[bytes.length-3] + "." + bytes[bytes.length-2] + "." + Integer.toString(bytes[bytes.length-1]+1);
 			this.mainAsn = bytes[bytes.length-7];
 			this.subAsn = bytes[bytes.length-5] + bytes[bytes.length-6];
 			this.ebgpHop = ""+bytes[bytes.length-9];

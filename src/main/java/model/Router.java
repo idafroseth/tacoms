@@ -60,14 +60,19 @@ public class Router extends Connection {
 																		// of
 																		// the
 																		// dest-pattern
-					String nextHop = word[7].substring(5);
-					String data[] = new String[2];
-					data[0] = nextHop;
-					data[1] = word[0];
-					// Logger.info("putting into existing dialpeers:
-					// "+dstPattern + " with data " + data[0]+ " and "
-					// +data[1]);
-					dialPeers.put(dstPattern, data);
+		
+					if(word.length>7){
+						if(word[7].length()>5){
+							String nextHop = word[7].substring(5);
+							String data[] = new String[2];
+							data[0] = nextHop;
+							data[1] = word[0];
+							// Logger.info("putting into existing dialpeers:
+							// "+dstPattern + " with data " + data[0]+ " and "
+							// +data[1]);
+							dialPeers.put(dstPattern, data);
+						}
+					}
 				}
 			}
 		} catch (InterruptedException | OnepException | ExceptionIDL e) {
@@ -304,8 +309,8 @@ public class Router extends Connection {
 				vty.write(CiscoCLI.CONFT);
 				vty.write("interface tunnel " + hexArray[1]);
 				Logger.info("***interface tunnel" +hexArray[1] );
-				Logger.info("***ip address " + ipv4TuAdress+2 + " 255.255.255.252" );
-				vty.write("ip address " + ipv4TuAdress+2 + " 255.255.255.252");
+				Logger.info("***ip address " + ipv4TuAdress + " 255.255.255.252" );
+				vty.write("ip address " + ipv4TuAdress + " 255.255.255.252");
 				vty.write(CiscoCLI.END);
 			}
 			Logger.info("--------------Done updating Tunnel to "+hexArray[1] + " --------");
@@ -474,25 +479,28 @@ public class Router extends Connection {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
+			vty.write("end");
 			String ipv6Summary = vty.write("show bgp ipv6 summary");
 			Scanner scin = new Scanner(ipv6Summary);
-			String line = scin.nextLine();
-
-			while (scin.hasNextLine()) {
-				line = scin.nextLine();
-				if (line.contains("Neighbor")) {
+			if(scin.hasNextLine()){
+				String line = scin.nextLine();
+	
+				while (scin.hasNextLine()) {
 					line = scin.nextLine();
-					break;
+					if (line.contains("Neighbor")) {
+						line = scin.nextLine();
+						break;
+					}
 				}
-			}
-			while (scin.hasNextLine() && !line.contains("%")) {
-				String[] words = line.split("\\s+");
-				// FIX: Denne sjekken er kanskje litt usikker!?!?
-				if (words.length > 9) {
-					bgpPeers.put(words[0], words[9]);
-					line = scin.nextLine();
-				} else {
-					break;
+				while (scin.hasNextLine() && !line.contains("%")) {
+					String[] words = line.split("\\s+");
+					// FIX: Denne sjekken er kanskje litt usikker!?!?
+					if (words.length > 9) {
+						bgpPeers.put(words[0], words[9]);
+						line = scin.nextLine();
+					} else {
+						break;
+					}
 				}
 			}
 		} catch (InterruptedException | OnepException | ExceptionIDL e) {
@@ -522,7 +530,6 @@ public class Router extends Connection {
 			vty.write("no neighbor " + data[3] + " activate");
 			vty.write(CiscoCLI.GOBGPV6);
 			vty.write("neighbor " + data[3] + " activate");
-			vty.write("neighbor " + data[3] + " route-map setNextHop out");
 			vty.write("neighbor " + data[3] + " prefix-list bgp_out out");
 			vty.write("neighbor " + data[3] + " route-map setNextHopIn out");
 			vty.write("neighbor " + data[3] + " soft-reconfiguration inbound");

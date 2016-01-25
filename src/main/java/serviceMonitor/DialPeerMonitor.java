@@ -35,39 +35,42 @@ public class DialPeerMonitor extends Thread {
 	 * Looks for new peers and updates add og delete dialpeers.
 	 */
 	public void lookForChangePeers() {
-		HashMap<String, String> bgpDialpeers = router.getBgpDialPeers();
-		HashMap<String, String[]> dialPeers = router.getDialPeers();
+		HashMap<String, String> newDialPeers = router.getBgpDialPeers();
+		HashMap<String, String[]> existingDialPeers = router.getDialPeers();
 
-		for (String telPrefix : bgpDialpeers.keySet()) {
-			if (dialPeers.get(telPrefix) == null) {
-				router.addDialPeer(telPrefix, bgpDialpeers.get(telPrefix));
-				System.out.println("Dial-Peers do not exist: " + telPrefix + ", " + bgpDialpeers.get(telPrefix));
-			} else if (!dialPeers.get(telPrefix)[0].equals(bgpDialpeers.get(telPrefix))) {
-				System.out.println("New ip " + bgpDialpeers.get(telPrefix));
-				int dialpeerNR = Integer.parseInt(dialPeers.get(telPrefix)[1]);
-				if (dialpeerNR >= 30000) { // sjekker kun linjer som starter med
-											// tall over 30000
-					String nexthopAddr = bgpDialpeers.get(telPrefix);
-					router.updateDialPeer(telPrefix, nexthopAddr, Integer.parseInt(dialPeers.get(telPrefix)[1])); // Updates
-																													// dial-peers
-																													// list
-				} else {
-					System.out.println("Skipping: " + telPrefix + " NextHop " + bgpDialpeers.get(telPrefix)
-							+ " static nextHop is " + dialPeers.get(telPrefix)[0]);
+
+		//********Compares new Dial-peers against existing Dial-peers:
+		for (String key : newDialPeers.keySet()){
+			String[] result = existingDialPeers.get(key);
+			if(existingDialPeers.get(key)==null){
+				router.addDialPeer(key, newDialPeers.get(key));
+				Logger.info("Dial-Peers do not exist");
+			}
+			else if(existingDialPeers.get(key)[0].equals(newDialPeers.get(key))){
+//						System.out.println("Exsist with correct IP, do nothing");
+			}else{
+//						System.out.println("New ip " + newDialPeers.get(key));
+				int dialpeerNR = Integer.parseInt(existingDialPeers.get(key)[1]);
+				if(dialpeerNR >= 30000){ //sjekker kun linjer som starter med tall over 30000
+					String nexthopAddr = newDialPeers.get(key);
+					router.updateDialPeer(key, nexthopAddr, Integer.parseInt(existingDialPeers.get(key)[1])); //Updates dial-peers list
+				}else{
+					Logger.info("Skipping: " + key + " NextHop " + newDialPeers.get(key) + " static nextHop is "+existingDialPeers.get(key)[0]);
 				}
 			}
 		}
-		// *******Compares existing Dial-peers against new Dial-peers (in case
-		// of interface down):
-		if (bgpDialpeers.keySet().equals(dialPeers.keySet())) {
-			System.out.println("Dial-Peers are correct. Do nothing");
-		} else {
-			for (String telPrefix : dialPeers.keySet()) {
-				if (bgpDialpeers.get(telPrefix) == null) {
-					router.removeDialPeer(dialPeers.get(telPrefix)[1]);
-					System.out.println("Cleaning ERROR !");
-				} else {
-
+		
+//*******Compares existing Dial-peers against new Dial-peers (in case of interface down):
+		if(newDialPeers.keySet().equals(existingDialPeers.keySet())){
+			Logger.info("Dial-Peers are correct. Do nothing");
+		}
+		else{
+			for(String key:existingDialPeers.keySet()){
+				if(newDialPeers.get(key) == null){
+					router.removeDialPeer(existingDialPeers.get(key)[1]);
+					Logger.info("Cleaning ERROR !");
+				}else{
+					
 				}
 			}
 		}
