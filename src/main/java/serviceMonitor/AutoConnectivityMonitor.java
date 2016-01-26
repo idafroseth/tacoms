@@ -2,6 +2,7 @@ package serviceMonitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import com.cisco.onep.core.exception.OnepConnectionException;
 import com.cisco.onep.core.exception.OnepException;
@@ -18,12 +19,13 @@ import gui.Logger;
 import model.Extractor;
 import model.Router;
 
-public class AutoConnectivityMonitor extends Thread implements RIBRouteStateListener {
+public class AutoConnectivityMonitor implements Runnable, RIBRouteStateListener {
 
 	Router router;
 	Extractor extractor4 = new Extractor();
 	Extractor extractor6 = new Extractor();
 	ArrayList<Integer> ribListeners = new ArrayList<Integer>();
+	public static boolean STARTED = false;
 
 	public AutoConnectivityMonitor(Router router) {
 		this.router = router;
@@ -33,7 +35,7 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 	public void run() {
 		try {
 
-			ribListeners.add(router.addRIBRouteStateListener(AFIType.IPV4, this, OwnerType.RIP));
+		//	ribListeners.add(router.addRIBRouteStateListener(AFIType.IPV4, this, OwnerType.RIP));
 			ribListeners.add(router.addRIBRouteStateListener(AFIType.IPV6, this, OwnerType.RIP));
 		} catch (OnepException e1) {
 			e1.printStackTrace();
@@ -42,7 +44,7 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 		while (true) {
 			Logger.info("Checking if there are new Autconn neighbors");
 			try {
-				Thread.sleep(5 * 1000);
+				Thread.sleep(10*1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				Logger.info("INTERRUPT IN AUTCONNECT");
@@ -56,7 +58,44 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 //				}
 				return;
 			}
+			lookForGREPeers();
 		}
+	}
+	
+	public void lookForGREPeers(){
+		HashMap<String, String> ripPeers = router.getRipPeers();
+		List<String> tunnelIds = router.getConfiguredTunnel();
+		//Check the announced peers against the tunnelIDs
+//		
+//		Down
+//			router.removeNeighbor(octett);
+//		
+		
+		for(String peerId : ripPeers.keySet()){
+			System.out.println(peerId);
+			if(!tunnelIds.contains(peerId)){
+				Logger.info("Discovered a new GRE peer " + peerId);
+				if (Integer.parseInt(peerId) > 47) {
+					router.addSlaveNode(ripPeers.get(peerId).split("\\."));
+				} else if (Integer.parseInt(peerId) < 47) {
+					router.addMasterNode(ripPeers.get(peerId).split("\\."));
+				}
+			}
+		}
+		loop:
+		for(String tunnelId : tunnelIds){
+			System.out.println("checking tunnel " +tunnelId);
+			Integer id = Integer.parseInt(tunnelId);
+			if(id<=10 || id>100 ){
+				continue loop;
+			}
+			if(!ripPeers.containsKey(tunnelId)){
+				Logger.info("Discovered a tunnel ID that has no RIP entry - remove " + tunnelId);
+				router.removeNeighbor(ripPeers.get(tunnelId).split("\\."));
+			}
+		}
+		
+		
 	}
 
 	public void lookForNewPeer(){
@@ -86,15 +125,11 @@ public class AutoConnectivityMonitor extends Thread implements RIBRouteStateList
 			if (((L3UnicastScope) event.getScope()).getAfi() == AFIType.IPV4) {
 				Logger.info("----------------------START Configuring Tunnel---------------------------");
 				String[] octett = extractor4.octettExtractor(l3uRoute.getPrefix().getAddress().toString());
-				if (state == RIB.RouteState.UP) {
-					if (Integer.parseInt(octett[1]) > 47) {
-						router.addSlaveNode(octett);
-					} else if (Integer.parseInt(octett[1]) < 47) {
-						router.addMasterNode(octett);
-					}
-				} else if (state == RIB.RouteState.DOWN) {
-					router.removeNeighbor(octett);
-				}
+//				if (state == RIB.RouteState.UP) {
+//
+//				} else if (state == RIB.RouteState.DOWN) {
+//					router.removeNeighbor(octett);
+//				}
 				Logger.info("----------------------DONE Configuring Tunnel---------------------------");
 			}else{
 				String[] data = extractor6.hexExtractor(l3uRoute.getPrefix().getAddress());

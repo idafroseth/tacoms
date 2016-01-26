@@ -2,7 +2,7 @@ package serviceMonitor;
 
 import com.jhlabs.image.FieldWarpFilter.Line;
 
-public class CRLMonitor extends Thread{
+public class CRLMonitor implements Runnable{
 
 	//Poll the local CRL to check if the crl is revocated, if that is the case it will start with R
 	

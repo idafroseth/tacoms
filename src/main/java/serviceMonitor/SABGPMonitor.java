@@ -12,8 +12,9 @@ import com.cisco.onep.idl.ExceptionIDL;
 import gui.Logger;
 import model.Router;
 
-public class SABGPMonitor extends Thread {
+public class SABGPMonitor implements Runnable {
 	private Router router;
+	public static boolean STARTED = false;
 
 	public SABGPMonitor(Router router) {
 		this.router = router;
@@ -23,13 +24,14 @@ public class SABGPMonitor extends Thread {
 	public void run() {
 		// TODO Auto-generated method stub
 		while (true) {
-			Logger.info("Checking SA BGP peers against neighbors table");
-			lookForChangeInPeers();
+			if(SABGPMonitor.STARTED){
+				Logger.info("Checking SA BGP peers against neighbors table");
+				lookForChangeInPeers();
+			}
 			try {
 				Thread.sleep(10 * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				//Interrupted when the user click disable
 				return;
 			}
 		}

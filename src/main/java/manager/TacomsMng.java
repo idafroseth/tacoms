@@ -19,9 +19,12 @@ public class TacomsMng {
 	ServicesPanel overview;
 	String t6ServiceView = "Service SoW6";
 	Router router;
-	Thread autoconnectMonitor; 
-	Thread saBGPMonitor; 
-	Thread dialPeerMonitor;
+	Thread autoconnThread; 
+	Thread saBgpThread; 
+	Thread dialPeerThread;
+	AutoConnectivityMonitor autoconnectMonitor;
+	SABGPMonitor saBGPMonitor;
+	DialPeerMonitor dialPeerMonitor;
 	
 	public TacomsMng(){
 		Logger.init();
@@ -59,9 +62,18 @@ public class TacomsMng {
 		try {
 			router = new Router(ip, userName, pwd, "TACOMS");
 			router.connect("TACOMS");
-			autoconnectMonitor = new AutoConnectivityMonitor(router);
-			saBGPMonitor = new SABGPMonitor(router);
-			dialPeerMonitor = new DialPeerMonitor(router);
+			
+			AutoConnectivityMonitor autoconnectMonitor = new AutoConnectivityMonitor(router);
+			SABGPMonitor saBGPMonitor = new SABGPMonitor(router);
+			DialPeerMonitor dialPeerMonitor = new DialPeerMonitor(router);
+			
+			Thread autoThread = new Thread(autoconnectMonitor);
+			Thread saBgpThread = new Thread(saBGPMonitor);
+			Thread dialPeerThread = new Thread(dialPeerMonitor);
+			
+			autoThread.start();
+			saBgpThread.start(); 
+			dialPeerThread.start();
 			
 		} catch (OnepException e) {
 			// TODO Auto-generated catch block
@@ -86,18 +98,18 @@ public class TacomsMng {
 			return false;
 		}
 		else if(id.equals(ServiceID.AUTOCONNECT.toString())){
-			autoconnectMonitor.start();
+			AutoConnectivityMonitor.STARTED = true;
 			Logger.info("Started autoconnectMonitor");
 		}
 		else if(id.equals(ServiceID.SA_BGP.toString())){
-			saBGPMonitor.start(); 
+			SABGPMonitor.STARTED = true;
 			Logger.info("Started saBGPMonitor");
 		}
 		else if(id.equals(ServiceID.DIALPEER.toString())){
-			if(!saBGPMonitor.isAlive()){
+			if(!SABGPMonitor.STARTED){
 				JOptionPane.showMessageDialog(gui, "You have to start SA_BGP before DialPeer.");
 			}else{
-				dialPeerMonitor.start();
+				DialPeerMonitor.STARTED = true;
 				Logger.info("Started DialpeerMonitor");
 			}
 		}		
@@ -111,16 +123,16 @@ public class TacomsMng {
 		}
 		else if(id.equals(ServiceID.AUTOCONNECT.toString())){
 			Logger.info("Trying to disable AUTOCONN");
-			autoconnectMonitor.interrupt();
+			AutoConnectivityMonitor.STARTED = false;
 			Logger.info("AUTOCONN disabled");
 		}
 		else if(id.equals(ServiceID.SA_BGP.toString())){
 			Logger.info("Trying to disable SA_BGP");
-			saBGPMonitor.interrupt(); 
+			SABGPMonitor.STARTED = false;
 			Logger.info("SA_BGP disbled");
 		}
 		else if(id.equals(ServiceID.DIALPEER.toString())){
-			dialPeerMonitor.interrupt();
+			DialPeerMonitor.STARTED = false;
 		}		
 		return true;
 	}

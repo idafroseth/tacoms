@@ -5,7 +5,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import com.cisco.onep.core.exception.OnepConnectionException;
 import com.cisco.onep.core.exception.OnepException;
@@ -112,6 +114,97 @@ public class Router extends Connection {
 
 	////////////////////////////// BEGIN AUTOCON
 	////////////////////////////// METHODS//////////////////////////////
+	public synchronized HashMap<String, String> getRipPeers(){
+		HashMap<String,String> ripPeers = new HashMap<String, String>();
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			vty.write(CiscoCLI.END);
+			String ripTable = vty.write("show ip route rip");
+			Scanner scin = new Scanner(ripTable);
+			String line = "";
+			loop:
+			while(scin.hasNextLine()){
+				if( scin.nextLine().contains("110.0.0.0/32")){
+					break loop;
+				}
+			}
+			while(scin.hasNextLine()){
+				line = scin.nextLine();
+				String[] words = line.split("\\s+");
+				String announcedPeer = words[4];
+				ripPeers.put(announcedPeer.split("\\.")[1],announcedPeer);
+				Logger.info("Detected neighbor " + announcedPeer + " with id " +announcedPeer.split("\\.")[1]);
+			}
+			
+			
+		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
+			e1.printStackTrace();
+		}
+		
+		return ripPeers;
+	}
+	public List<String> getConfiguredTunnel(){
+		List<String> configuredTunnels = new ArrayList<String>();
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			vty.write(CiscoCLI.END);
+			String tunnelList = vty.write("sh int summary | include Tunnel");
+			Scanner scin = new Scanner(tunnelList);
+			String line = "";
+			
+			while(scin.hasNextLine()){
+				line = scin.nextLine();
+				if(line.contains("Tunnel")){
+					String[] words = line.split("\\s+");
+					int index = 0;
+					if(line.contains("*")){
+						index = 1;
+					}else{
+						index = 0;
+					}
+					System.out.println("Tunnel + " + words[index]);
+					String tunnelId = words[1].replace("Tunnel","");
+					
+					Logger.info("Discovered a configured tunnel with id: " + tunnelId);
+					configuredTunnels.add(tunnelId);	
+				}
+			}
+		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
+			e1.printStackTrace();
+		}
+			
+		return configuredTunnels;
+	}
+	
+	public boolean isTunnelConfigured(String ipv4Peer){
+		
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			vty.write(CiscoCLI.END);
+			String[] id = ipv4Peer.split(".");
+			if(vty.write("show run int tun " + id[1]).contains("Invalid")){
+				Logger.info("The tunnel to " + ipv4Peer + " Does not exist");
+				return false;
+			}
+			if(vty.write("ping "+ipv4Peer + " repeat 1").contains("Success")){
+				Logger.info("The tunnel is configured correctly");
+				return true;
+			}
+			
+			
+		} catch (InterruptedException | OnepException | ExceptionIDL e1) {
+			e1.printStackTrace();
+		}
+		return false;
+		
+	}
+	
 	public synchronized HashMap<String, String> getRIPngPeers(){
 		HashMap<String, String> ripPeers = new HashMap<String, String>();
 		try {
@@ -186,14 +279,14 @@ public class Router extends Connection {
 
 			Logger.info("We are a masternode");
 			String phyDest = "111." + octett[1] + "." + octett[2] + "." + octett[3];
-			String iPv6Adr = "FD00:202::2F:1:114.47." + octett[1] + "." + (Integer.parseInt(octett[2]) * 4+ 1) + "/127";
+			String iPv6Adr = "FD00:202::2F:1:114.47." + octett[1] + ".1/127"; //+ (Integer.parseInt(octett[2]) * 4+ 1) + "/127";
 			Logger.info("The tunnel did not exist so we are about to create the tunnel");
 
 			vty.write(CiscoCLI.CONFT);
 			vty.write("crypto isakmp key TAC9MS! address " + phyDest);
 			Logger.info("interface tunnel" + octett[1]);
 			vty.write("interface tunnel" + octett[1]);
-			vty.write("ip address " + "114.47." + octett[1] + "." + Integer.parseInt(octett[2]) * 4 + 2
+			vty.write("ip address " + "114.47." + octett[1] + ".2" //+ Integer.parseInt(octett[2]) * 4 + 2
 					+ " 255.255.255.252");
 			vty.write("tunnel destination " + phyDest);
 			vty.write("tunnel source 111.47.1.1");
@@ -447,9 +540,11 @@ public class Router extends Connection {
 				if (!ripList.contains(words[1])) {
 					ripList.add(words[1]);
 				}
-				line = scin.nextLine();
-				String[] words2 = line.split("/");
-				nextHop = words2[0];
+				if(scin.hasNextLine()){
+					line = scin.nextLine();
+					String[] words2 = line.split("/");
+					nextHop = words2[0];
+				}
 
 			}
 			for (String s : ripList) {
@@ -618,7 +713,7 @@ public class Router extends Connection {
 
 			for (int i = 0; i < (bgplines.length) - 1; i++) {
 				String[] line = bgplines[i].split("/");
-				if (bgplines[i].contains(CiscoCLI.NOCOBGP)) {
+				if (bgplines[i].contains(CiscoCLI.NOCOBGP) || (!bgplines[i].contains("FD00:520") && !bgplines[i].contains("FD00:4:1"))) {
 					continue;
 				} else if (bgplines[i].contains("FD00")) {
 					int mask = Integer.parseInt(line[1]);
@@ -690,6 +785,7 @@ public class Router extends Connection {
 			if (!vty.isOpen()) {
 				vtyOpen();
 			}
+			Logger.info("Removing dialpeer with tag: " + dialPeer);
 			vty.write(CiscoCLI.CONFT);
 			vty.write("no dial-peer voice " + dialPeer + " voip");
 			vty.write(CiscoCLI.END);
@@ -755,8 +851,10 @@ public class Router extends Connection {
 				vtyOpen();
 			}
 			vty.write(CiscoCLI.CONFT);
+			Logger.info("****adding dial-peer with tag: " + newTag);
 			vty.write("dial-peer voice " + newTag + " voip");
 			vty.write("destination-pattern " + destPattern);
+			Logger.info("****adding dial-peer with destination Pattern: " + destPattern + " and next hop " + sipServer);
 			vty.write("session target ipv4:" + sipServer);
 			vty.write("voice-class codec 1");
 			vty.write("session protocol sipv2");

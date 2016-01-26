@@ -34,8 +34,6 @@ public class Connection {
     	this.routerIP = ipaddress;
     	this.username = userName;
     	this.password = password;
-    	networkApplication = NetworkApplication.getInstance();
-        networkApplication.setName(applicationName);
     }
     
     /**
@@ -45,7 +43,11 @@ public class Connection {
      * @throws OnepException
      */
 	public boolean connect(String applicationName)  {
+
         try {
+    		networkApplication = NetworkApplication.getInstance();
+            networkApplication.setName(applicationName);
+   
         	networkElement = networkApplication.getNetworkElement(routerIP);
         	//Using sessionConfig and certificate based connection to the router - use only username and password if not in the connect.
         	SessionHandle sessionHandle = networkElement.connect(username, password, getSessionConfig());

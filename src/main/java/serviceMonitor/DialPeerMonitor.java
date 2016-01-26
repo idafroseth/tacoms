@@ -5,8 +5,9 @@ import java.util.HashMap;
 import gui.Logger;
 import model.Router;
 
-public class DialPeerMonitor extends Thread {
+public class DialPeerMonitor implements Runnable {
 	private Router router;
+	public static boolean STARTED = false;
 
 	public DialPeerMonitor(Router router) {
 		this.router = router;
@@ -19,8 +20,11 @@ public class DialPeerMonitor extends Thread {
 	public void run() {
 		// TODO Auto-generated method stub
 		while (true) {
-			Logger.info("Checking dialPeers against BGP table");
-			lookForChangePeers();
+			Logger.info("Cecking PEER: " + STARTED);
+			if(DialPeerMonitor.STARTED){
+				Logger.info("Checking dialPeers against BGP table");
+				lookForChangePeers();
+			}
 			try {
 				Thread.sleep(10 * 1000);
 			} catch (InterruptedException e) {

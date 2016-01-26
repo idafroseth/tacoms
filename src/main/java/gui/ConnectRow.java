@@ -15,9 +15,9 @@ import manager.TacomsMng;
 
 public class ConnectRow extends JPanel{
 	TacomsMng mng;
-	JTextField ipAddress = new JTextField("IP address");
-	JTextField userName = new JTextField("Username");
-	JPasswordField password = new JPasswordField("Password");
+	JTextField ipAddress = new JTextField("47.100.0.1");
+	JTextField userName = new JTextField("cisco");
+	JPasswordField password = new JPasswordField("Cisco123");
 	JButton connect = new JButton("Connect");
 	Dimension filedSize =  new Dimension( 100, 24  );
 	
