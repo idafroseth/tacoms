@@ -58,7 +58,9 @@ public class AutoConnectivityMonitor implements Runnable, RIBRouteStateListener 
 //				}
 				return;
 			}
-			lookForGREPeers();
+			if(AutoConnectivityMonitor.STARTED){
+				lookForGREPeers();
+			}
 		}
 	}
 	
@@ -72,27 +74,31 @@ public class AutoConnectivityMonitor implements Runnable, RIBRouteStateListener 
 //		
 		
 		for(String peerId : ripPeers.keySet()){
-			System.out.println(peerId);
+		//System.out.println(peerId);
 			if(!tunnelIds.contains(peerId)){
 				Logger.info("Discovered a new GRE peer " + peerId);
 				if (Integer.parseInt(peerId) > 47) {
-					router.addSlaveNode(ripPeers.get(peerId).split("\\."));
+					router.addSlaveNode(ripPeers.get(peerId).split("\\."), ripPeers.get(peerId));
 				} else if (Integer.parseInt(peerId) < 47) {
-					router.addMasterNode(ripPeers.get(peerId).split("\\."));
+					router.addMasterNode(ripPeers.get(peerId).split("\\."),ripPeers.get(peerId));
 				}
 			}
 		}
 		loop:
 		for(String tunnelId : tunnelIds){
-			System.out.println("checking tunnel " +tunnelId);
+		//	System.out.println("checking tunnel " +tunnelId);
 			Integer id = Integer.parseInt(tunnelId);
 			if(id<=10 || id>100 ){
 				continue loop;
 			}
 			if(!ripPeers.containsKey(tunnelId)){
 				Logger.info("Discovered a tunnel ID that has no RIP entry - remove " + tunnelId);
-				router.removeNeighbor(ripPeers.get(tunnelId).split("\\."));
+				router.removeNeighbor(tunnelId );
 			}
+//			else if(!router.isTunnelConfigured(ripPeers.get(tunnelId))){
+//				Logger.info("The tunnel is not configured properly - remove " + tunnelId);
+//				router.removeNeighbor(ripPeers.get(tunnelId).split("\\."),ripPeers.get(tunnelId) );
+//			}
 		}
 		
 		

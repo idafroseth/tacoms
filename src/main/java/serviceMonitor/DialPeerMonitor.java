@@ -26,7 +26,7 @@ public class DialPeerMonitor implements Runnable {
 				lookForChangePeers();
 			}
 			try {
-				Thread.sleep(10 * 1000);
+				Thread.sleep(40 * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				//Interrupted when the user click disable
