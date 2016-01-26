@@ -715,7 +715,8 @@ public class Router extends Connection {
 				String[] line = bgplines[i].split("/");
 				if (bgplines[i].contains(CiscoCLI.NOCOBGP) || (!bgplines[i].contains("FD00:520") && !bgplines[i].contains("FD00:4:1"))) {
 					continue;
-				} else if (bgplines[i].contains("FD00")) {
+				}
+				if (bgplines[i].contains("FD00")) {
 					int mask = Integer.parseInt(line[1]);
 					String[] telprefix = (line[0].split(":"));
 
@@ -724,13 +725,18 @@ public class Router extends Connection {
 						startHex = 2;
 					} else if (bgplines[i].contains("FD00:4:1")) {
 						startHex = 3;
+					} else if(bgplines[i].contains("540")){
+						startHex = 3;
 					}
 					String dialPeerNr = "";
 					for (int s = startHex; s <= (mask / 16) - 1; s++) {
-						if (telprefix[s].equals("")) {
-							dialPeerNr += "000";
-						} else {
-							dialPeerNr += telprefix[s];
+						Logger.info("********** Trying to parse DP address " + startHex + " with Dialpeer number " + dialPeerNr);
+						if(telprefix.length>s){
+							if (telprefix[s].equals("")) {
+								dialPeerNr += "000";
+							} else {
+								dialPeerNr += telprefix[s];
+							}
 						}
 					}
 					int oldmetric = 255;
