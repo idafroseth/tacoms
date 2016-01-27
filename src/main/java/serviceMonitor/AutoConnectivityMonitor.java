@@ -112,11 +112,11 @@ public class AutoConnectivityMonitor implements Runnable, RIBRouteStateListener 
 	}
 	
 	
-	public void handleEvent(RIBRouteStateEvent event, Object clientData) {
+	public synchronized void handleEvent(RIBRouteStateEvent event, Object clientData) {
 
 		L3UnicastRoute l3uRoute = (L3UnicastRoute) event.getRoute();
 		OwnerType rType = l3uRoute.getOwnerType();
-
+		
 		RIB.RouteState state = event.getState();
 		Logger.info("RIBRouteStateEvent received...");
 		Logger.info("This is a " + rType + " route.");
@@ -124,52 +124,60 @@ public class AutoConnectivityMonitor implements Runnable, RIBRouteStateListener 
 		Logger.info("State: " + event.getState());
 		Logger.info("Scope: " + ((L3UnicastScope) event.getScope()).getAfi());
 
-		// String rType = l3uRoute.getOwnerType().toString();
-		
-	////I AM CONFIGURING OWNER TYPE IN THE SET UP OF THE 	
-	//	if (rType.equals(OwnerType.RIP)) {
-			if (((L3UnicastScope) event.getScope()).getAfi() == AFIType.IPV4) {
-				Logger.info("----------------------START Configuring Tunnel---------------------------");
-				String[] octett = extractor4.octettExtractor(l3uRoute.getPrefix().getAddress().toString());
-//				if (state == RIB.RouteState.UP) {
-//
-//				} else if (state == RIB.RouteState.DOWN) {
-//					router.removeNeighbor(octett);
-//				}
-				Logger.info("----------------------DONE Configuring Tunnel---------------------------");
-			}else{
-				String[] data = extractor6.hexExtractor(l3uRoute.getPrefix().getAddress());
-				Logger.info("inside RIP configure wih " + Integer.parseInt(data[0]));
-				switch (Integer.parseInt(data[0])) {
-				case 202:
+		if (((L3UnicastScope) event.getScope()).getAfi() == AFIType.IPV6) {
+			String[] data = extractor6.hexExtractor(l3uRoute.getPrefix().getAddress());
+			Logger.info("inside RIP configure wih " + Integer.parseInt(data[0]));
+			switch (Integer.parseInt(data[0])) {
+			case 202:
+				if(sanityCheck(data[1], data[3].substring(4, 6),l3uRoute.getPrefix().getAddress().toString())){
 					if (state.equals(RIB.RouteState.UP)) {
 						Logger.info("Identified 202 UP");
-						router.addGRETunnel(data);
+						router.addGRETunnel(data);			
 					}
 					if (state.equals(RIB.RouteState.DOWN)) {
 						Logger.info("Identified 202 DOWN");
 						router.removeGRETunnel(data);
 					}
-					break;
-				case 510:
+				}
+				break;
+			case 510:
+				if(sanityCheck(data[1], data[3].substring(0, 2),l3uRoute.getPrefix().getAddress().toString())){
 					if (state.equals(RIB.RouteState.UP)) {
 						router.addBGPv4Neighbor(data);
 					}
 					else if (state.equals(RIB.RouteState.DOWN)) {
 						router.removeBGPv4Neighbor(data);
 					}
-					break;
-				case 511:
+				}
+				break;
+			case 511:
+				if(sanityCheck(data[1], data[3].substring(0, 2), l3uRoute.getPrefix().getAddress().toString())){
 					if (state.equals(RIB.RouteState.UP)) {
 						router.addMulicastNeighbor(data);
 					}
 					else if (state.equals(RIB.RouteState.DOWN)) {
 						router.removeMulicastNeighbor(data);
 					}
-					break;
 				}
+				break;
 			}
+			
+		}
 		//}
+	}
+	public synchronized boolean sanityCheck(String as, String fromIpv4, String ipv6Adr){
+		String tunSrc = router.getTunnelSource(ipv6Adr.substring(ipv6Adr.length()-12, ipv6Adr.length()).toUpperCase());
+		Logger.info("SANITY CHECKING: " + as + " vs " + fromIpv4 + " from route " + ipv6Adr.substring(1).toUpperCase() +" src " + tunSrc);
+		System.out.println("********* " + tunSrc);
+		if(!(as.equals(fromIpv4)) || !(tunSrc.contains(as)) || !(tunSrc.contains(fromIpv4))){
+			Logger.info("******** Sanitiy check failed *******");
+			Logger.info("********Recived EntityNumber: " + as);
+			Logger.info("******** Extracted EntityNumber from IPv4 are: " + fromIpv4);
+			Logger.info("******** Comming from source: "+ tunSrc);
+			Logger.info("*********** "+!(as.equals(fromIpv4))+"" + !(tunSrc.contains(as))  +"" +!(tunSrc.contains(fromIpv4)) );
+			return false;
+		}
+		return true;
 	}
 
 }

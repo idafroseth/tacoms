@@ -150,7 +150,7 @@ public class Router extends Connection {
 				if(announcedPeer.contains(".")){
 					ripPeers.put(announcedPeer.split("\\.")[1],announcedPeer);
 				}
-				Logger.info("Detected neighbor " + announcedPeer + " with id " +announcedPeer.split("\\.")[1]);
+				//Logger.info("Detected neighbor " + announcedPeer + " with id " +a);
 			}
 			
 			
@@ -323,7 +323,7 @@ public class Router extends Connection {
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:510:0:2:2F:1:2F01:1/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:511::2F:1:2F01:2/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit " + iPv6Adr);
-			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");
+			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:1:1:2F01:1/128");//" permit FD00:500:0:2:2F:1:2F01:1/128");
 			vty.write(CiscoCLI.END);
 			Logger.info("You have just created a new Tunnel with ID " + octett[1]);
 
@@ -527,6 +527,36 @@ public class Router extends Connection {
 			Logger.error(e.getLocalizedMessage());
 		}
 	}
+	
+	public synchronized String getTunnelSource(String ipv6adr){
+		System.out.println("Try to get tunnel source for: " + ipv6adr);
+		String result = "";
+		try {
+			if (!vty.isOpen()) {
+				vtyOpen();
+			}
+			vty.write("end");
+			String associatedPeer = vty.write("show ipv6 route rip | sec " + ipv6adr);
+			Scanner scin = new Scanner(associatedPeer);
+			System.out.println(associatedPeer);
+
+			while (scin.hasNextLine()) {
+				String line = scin.nextLine();
+				if(line.contains("Tunnel")){
+					line.replaceAll("\\s+", "");
+					result = line.substring(line.length()-2, line.length());
+					System.out.println("RESULT " + result);
+					return result;
+				}
+			}
+			
+		} catch (Exception e) {
+			Logger.error(e.getLocalizedMessage());
+			e.printStackTrace();
+		}
+		return result;
+			
+	}
 	/////////////////////////////// END AUTOCONN
 	/////////////////////////////// METHODS/////////////////////////////
 
@@ -565,13 +595,21 @@ public class Router extends Connection {
 
 			}
 			for (String s : ripList) {
+			//	String tunnelSrc = getTunnelSource(s);
 				String[] ipAdr = s.split("/");
 				InetAddress ipv6adr = InetAddress.getByName(ipAdr[0]);
 				String[] data = extractor6.hexExtractor(ipv6adr);
+				String ipv6 = ipAdr[0];
+				if(!data[1].equals(getTunnelSource(ipv6.substring(ipv6.length()-8,ipv6.length())))){
+					Logger.info("******** Sanitiy check failed *******");
+					Logger.info("********Tunnel EntityNumber: " + ipAdr[0]);
+					Logger.info("******** Extracted EntityNumber from IPv6 are: " + data[1]);
+				}else{
 				// i metoden benyttes ikke routeType til noe for denne SABGP og
 				// vi setter denne som placeholder for nextHop.
-				data[0] = nextHop;
-				ripListData.add(data);
+					data[0] = nextHop;
+					ripListData.add(data);
+				}
 			}
 		} catch (InterruptedException | OnepException | ExceptionIDL | UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -579,6 +617,7 @@ public class Router extends Connection {
 		}
 		return ripListData;
 	}
+
 
 	/**
 	 * Get a list of all the bgp ipv6 neighbor that are configured on the router
