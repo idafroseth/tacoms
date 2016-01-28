@@ -21,7 +21,7 @@ Locate the file where the pom.xml in the newly added git folder and click ok. Ru
 <h4>Design</h4>
 The NOR TACOMS contains multiple services which are identified in the TACOMS profile. For now it implements the SOW-6 profile. Each services run in its own thread and is managed by a Manager which also handles all updates of the GuI. All interaction with the router is done in the Model module where you will find a router-class and the VTY operations.  
 
-GUI-Views>>Manager>>Services>>Router
+
 # tacoms
 
 https://raw.github.com/idafroseth/tacoms/desgin.png
