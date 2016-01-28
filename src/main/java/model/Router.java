@@ -316,14 +316,16 @@ public class Router extends Connection {
 
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
-			vty.write(CiscoCLI.GORIPV6);
-			vty.write("distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]);
-			vty.write(CiscoCLI.END);
-			vty.write(CiscoCLI.CONFT);
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:510:0:2:2F:1:2F01:1/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:511::2F:1:2F01:2/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit " + iPv6Adr);
-			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:1:1:2F01:1/128");//" permit FD00:500:0:2:2F:1:2F01:1/128");
+			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");//" permit FD00:500:0:2:2F:1:2F01:1/128");
+		//vty.write("ipv6 prefix-list " + octett[1] + " deny ::/0");
+			vty.write(CiscoCLI.END);
+			vty.write(CiscoCLI.CONFT);
+			vty.write(CiscoCLI.GORIPV6);
+			vty.write("distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]);
+			
 			vty.write(CiscoCLI.END);
 			Logger.info("You have just created a new Tunnel with ID " + octett[1]);
 
@@ -360,8 +362,8 @@ public class Router extends Connection {
 			vty.write(CiscoCLI.CONFT);
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:510:0:2:2F:1:2F01:1/128");
 			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:511::2F:1:2F01:2/128");
-			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");
-			
+			vty.write("ipv6 prefix-list " + octett[1] + " permit FD00:500:0:2:2F:1:2F01:1/128");//" permit FD00:500:0:2:2F:1:2F01:1/128");
+		
 			vty.write(CiscoCLI.END);
 			vty.write(CiscoCLI.CONFT);
 			vty.write(CiscoCLI.GORIPV6);
@@ -390,9 +392,9 @@ public class Router extends Connection {
 			vty.write(CiscoCLI.CONFT);
 			Logger.info(vty.write("no interface tunnel " + id));
 		//	Logger.info(vty.write("no crypto isakmp key TAC9MS! address " + phyDest));
-		//	Logger.info(vty.write("no ipv6 prefix-list " + octett[1]));
+			Logger.info(vty.write("no ipv6 prefix-list " + id));
 			Logger.info(vty.write(CiscoCLI.GORIPV6));
-		//	Logger.info(vty.write("no distribute-list prefix-list " + octett[1] + " out tunnel " + octett[1]));
+			Logger.info(vty.write("no distribute-list prefix-list " + id + " out tunnel " + id));
 			Logger.info(vty.write(CiscoCLI.END));
 
 			Logger.info("Is Open after removing tunnel? " + vty.isOpen());
@@ -600,16 +602,16 @@ public class Router extends Connection {
 				InetAddress ipv6adr = InetAddress.getByName(ipAdr[0]);
 				String[] data = extractor6.hexExtractor(ipv6adr);
 				String ipv6 = ipAdr[0];
-				if(!data[1].equals(getTunnelSource(ipv6.substring(ipv6.length()-8,ipv6.length())))){
-					Logger.info("******** Sanitiy check failed *******");
-					Logger.info("********Tunnel EntityNumber: " + ipAdr[0]);
-					Logger.info("******** Extracted EntityNumber from IPv6 are: " + data[1]);
-				}else{
-				// i metoden benyttes ikke routeType til noe for denne SABGP og
-				// vi setter denne som placeholder for nextHop.
+				//if(!data[1].equals(getTunnelSource(ipv6.substring(ipv6.length()-8,ipv6.length())))){
+			//		Logger.info("******** Sanity check failed *******");
+			//		Logger.info("********Tunnel EntityNumber: " + ipAdr[0]);
+			//		Logger.info("******** Extracted EntityNumber from IPv6 are: " + data[1]);
+			//	}else{
+//				 i metoden benyttes ikke routeType til noe for denne SABGP og
+//				 vi setter denne som placeholder for nextHop.
 					data[0] = nextHop;
 					ripListData.add(data);
-				}
+			//	}
 			}
 		} catch (InterruptedException | OnepException | ExceptionIDL | UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -617,6 +619,7 @@ public class Router extends Connection {
 		}
 		return ripListData;
 	}
+
 
 
 	/**
@@ -675,7 +678,7 @@ public class Router extends Connection {
 			vty.write("ip route " + data[3] + " 255.255.255.255 " + data[0]);
 			vty.write(CiscoCLI.GOSABGP);
 			vty.write("neighbor " + data[3] + " remote-as " + data[1] + "." + data[2]);
-			vty.write("neighbor " + data[3] + " ebgp-multihop " + Integer.parseInt(data[5]) + 3);
+			vty.write("neighbor " + data[3] + " ebgp-multihop " + 5);
 			vty.write("neighbor " + data[3] + " update-source loopback 47");
 			vty.write(CiscoCLI.GOBGPV4);
 			vty.write("no neighbor " + data[3] + " activate");

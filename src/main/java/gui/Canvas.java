@@ -24,12 +24,10 @@ public class Canvas extends JXPanel{
 	JLabel title;
 	TacomsMng mng;
 	JPanel contentPane = new JPanel();
-	public static final int CANVAS_WIDTH = 300;
-	public static final int CANVAS_HEIGHT = 300;
 	
-    public Canvas(TacomsMng mng, String title){
+    public Canvas(TacomsMng mng, String title, int width, int height){
     	this.mng = mng;
-    	this.setPreferredSize(new Dimension(CANVAS_WIDTH,CANVAS_HEIGHT));
+    	this.setPreferredSize(new Dimension(width, height));
     	
     	this.setLayout(new BorderLayout());
     	
@@ -59,7 +57,7 @@ public class Canvas extends JXPanel{
     public void setContentPane(){
     	contentPane.setLayout(new GridLayout(6, 1));
     	this.add(contentPane, BorderLayout.CENTER);
-    	contentPane.setPreferredSize(new Dimension(CANVAS_WIDTH-10,CANVAS_HEIGHT));
+    //	contentPane.setPreferredSize(new Dimension(width,width));
     }
     
     public String getTitle(){

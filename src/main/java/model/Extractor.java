@@ -51,34 +51,6 @@ public class Extractor {
 		return oktett;
 	}
 
-	//Henter ut ndvendig info fra en ipv6 addr og logger dette i en Array[]: 
-	public String[] hexExtractor(InetAddress ipv6Adr){
-		String[] hexArray = ipv6Adr.toString().split(":");
-		if(hexArray.length>0){
-			this.routeType = hexArray[1]+"";
-		}
-		    
-		byte[] negBytes = ipv6Adr.getAddress();//ipv6Adr.getAddress();
-		Integer[] bytes = new Integer[negBytes.length];
-		for(int i = 0; i<negBytes.length; i++){
-			bytes[i] = negBytes[i]&0xff;
-		}
-		int lengde = bytes.length;
-		if(bytes.length>8){
-			this.IPv4Address = bytes[bytes.length-4] + "." + bytes[bytes.length-3] + "." + bytes[bytes.length-2] + "." + bytes[bytes.length-1];
-		//changed the IPv4Address minus one to pluss 1
-			this.IPv4AddressMinusEn = bytes[bytes.length-4] + "." + bytes[bytes.length-3] + "." + bytes[bytes.length-2] + "." + Integer.toString(bytes[bytes.length-1]+1);
-			this.mainAsn = bytes[bytes.length-7];
-			this.subAsn = bytes[bytes.length-5] + bytes[bytes.length-6];
-			this.ebgpHop = ""+bytes[bytes.length-9];
-		}else{
-			System.out.println("Extractor kunne ikke kjenne igjen dette formatet");
-		}
-		String[]sum = {this.routeType,""+this.mainAsn,""+this.subAsn,this.IPv4Address,this.IPv4AddressMinusEn, this.ebgpHop}; 
-		return sum;
-		
-	}
-	
 	public String[] phoneExtractor(String phone, InetAddress nH, int mask){
 		String[] pNr = phone.split(":");
 		//System.out.println(nH);
@@ -106,9 +78,42 @@ public class Extractor {
 		return retur;
 		
 	}
+	
+	public String[] hexExtractor(InetAddress ipv6Adr){
+		String[] hexArray = ipv6Adr.toString().split(":");
+		if(hexArray.length>0){
+			this.routeType = hexArray[1]+"";
+		}
+		byte[] negBytes = ipv6Adr.getAddress();
+		Integer[] bytes = new Integer[negBytes.length];
+		for(int i =1; i<negBytes.length; i++){
+			bytes[i] = negBytes[i]&0xff;
+		}
+
+		int bytesLength = bytes.length;
+		this.IPv4Address = (bytes[bytesLength-4] & 0xff)+"."+(bytes[bytesLength-3] & 0xff)+"."+(bytes[bytesLength-2] & 0xff)+"."+(bytes[bytesLength-1]  & 0xff);
+		this.IPv4AddressMinusEn = (bytes[bytesLength-4] & 0xff)+"."+(bytes[bytesLength-3] & 0xff)+"."+(bytes[bytesLength-2] & 0xff)+"."+(bytes[bytesLength-1]-1  & 0xff);
+
+		this.mainAsn = convertHexValueToDecimal(hexArray[4]);
+		this.subAsn = convertHexValueToDecimal(hexArray[5]);
+		System.out.println("RouteType: "+  this.routeType+"\n MainAS: "+this.mainAsn+ "\n SubAS: "+this.subAsn+ "\n Ipv4Address: " + this.IPv4Address + "\n Ipv4Address-1: "+ this.IPv4AddressMinusEn); 
+
+		
+		String[] sum = {this.routeType,""+this.mainAsn,""+this.subAsn,this.IPv4Address,this.IPv4AddressMinusEn}; 
+		return sum;
+	}
+	private Integer convertHexValueToDecimal(String hex){
+		return Integer.parseInt(hex.trim(), 16 );
+	}
+	
 		
 	public static void main(String[] args) throws UnknownHostException {
 		System.out.println("Welcome to extractor");
+		
+		InetAddress inetAdr = InetAddress.getByName("FD00:510:0:1:2C:201:2C00:1501");
+		Extractor  ex = new Extractor();
+
+		ex.hexExtractor(inetAdr);
 	//	Extractor ipv6 = new Extractor();
 		//System.out.println("The phone number is: " + ipv6.phoneExtractor("FD00:4:1:941:321:3:2:3211"));
 		
@@ -122,5 +127,6 @@ public class Extractor {
 	public Logger getLogger(){
 		return this.logger;
 	}
+
 
 }

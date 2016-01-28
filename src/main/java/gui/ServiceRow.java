@@ -34,7 +34,7 @@ public class ServiceRow extends JPanel{
 		this.setBackground(NEXT_COLOR);
 		configureServiceLabel(serviceName);
 		configureButtons(mng, serviceName, serviceID, isServiceEnabled);
-		this.setPreferredSize(new Dimension(Canvas.CANVAS_WIDTH-40, Canvas.CANVAS_HEIGHT));
+//		this.setPreferredSize(new Dimension(Canvas.CANVAS_WIDTH-40, Canvas.CANVAS_HEIGHT));
 		//this.setAlignmentX(Component.LEFT_ALIGNMENT);
 		toggleColor();
 		this.add(this.serviceLable);

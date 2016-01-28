@@ -23,8 +23,6 @@ public class ServicesPanel extends JPanel {
 	public ServicesPanel(TacomsMng mng, String title){
 		this.mng = mng;
 		setLayout(new BorderLayout());
-		
-		
 		contentPane.setLayout(new FlowLayout(FlowLayout.LEADING, 30, 30));
 		add(new ConnectRow(mng), BorderLayout.PAGE_START);
 		add(contentPane,BorderLayout.CENTER);
@@ -35,7 +33,7 @@ public class ServicesPanel extends JPanel {
 	}
 	
 	public void addContainer(String id){
-		Canvas can = new Canvas(mng, id);
+		Canvas can = new Canvas(mng, id, 300, 300);
 		can.setForeground(Color.WHITE);
 		canvases.put(id, can);
 		contentPane.add(can);

@@ -1,10 +1,13 @@
 package manager;
 
+import java.awt.Dimension;
+
 import javax.swing.JOptionPane;
 
 import com.cisco.onep.core.exception.OnepException;
 
 import gui.Logger;
+import gui.LoggingPanel;
 import gui.MainWindow;
 import gui.ServicesPanel;
 import model.Router;
@@ -46,15 +49,19 @@ public class TacomsMng {
 	
 	public void configureServiceWindow(){
 		this.overview = new ServicesPanel(this, "Overview");
+		LoggingPanel log = new LoggingPanel(this, "LoggingPanel");
+		
 		overview.addContainer(t6ServiceView);
 		overview.addService(t6ServiceView,"Autoconnect", ServiceID.AUTOCONNECT, false);
 		overview.addService(t6ServiceView, "SA_BGP", ServiceID.SA_BGP, false);
 		overview.addService(t6ServiceView, "DIALPEER", ServiceID.DIALPEER, false);
 		
-		overview.addContainer("TACOMS LOG");
-		overview.getCanvas("TACOMS LOG");
-		overview.getCanvas("TACOMS LOG").addLogger();
+		log.addContainer("TACOMS LOG");
+		log.getCanvas("TACOMS LOG");
+		log.getCanvas("TACOMS LOG").addLogger();
+		
 		gui.addContentWindow(overview, "Overview");
+		gui.addContentWindow(log, "Log");
 	}
 	
 	

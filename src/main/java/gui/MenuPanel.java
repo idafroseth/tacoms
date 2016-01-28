@@ -71,7 +71,8 @@ public class MenuPanel extends JPanel {
 		public void mouseReleased(MouseEvent e) {
 			JLabel button = (JLabel)e.getSource();
 			setButtonAsActive(button);
-			mainWindow.changeCard(button.getName());	
+			System.out.println("Clicked the menu button: " + button.getName());
+			mainWindow.changeCard(button.getName());
 		}
 
 		public void mouseEntered(MouseEvent e) {

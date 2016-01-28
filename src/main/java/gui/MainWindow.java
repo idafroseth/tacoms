@@ -11,8 +11,10 @@ import manager.TacomsMng;
 
 public class MainWindow extends JFrame{
 	TacomsMng tacoms;
-	public static final Integer MAIN_WINDOW_WIDTH = 1000;
+	public static final Integer MAIN_WINDOW_WIDTH = 680;
 	public static final Integer MAIN_WINDOW_HEIGHT = 1000;
+	public static Integer CONTENT_WINDOW_WIDTH = MAIN_WINDOW_WIDTH - 70;
+	public static Integer CONTENT_WINDOW_HEIGHT = MAIN_WINDOW_HEIGHT-300 ;
 	
 	
 	//Different windows
@@ -37,6 +39,11 @@ public class MainWindow extends JFrame{
 		this.pack();	
 	}
 	
+	/**
+	 * 
+	 * @param window
+	 * @param title
+	 */
 	public void addContentWindow(JPanel window, String title){
 		menuPanel.addMenuButton(title);
 		contentPane.add(window, title.toUpperCase());	
@@ -48,8 +55,7 @@ public class MainWindow extends JFrame{
 	 */
 	public void changeCard(String id){
 		setTitle("YTDownloader ~ Result");
-		((CardLayout) contentPane.getLayout()).show(contentPane, id);
+		((CardLayout) contentPane.getLayout()).show(contentPane, id.toUpperCase());
 	}
-	
 	
 }

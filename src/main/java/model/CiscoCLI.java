@@ -1,5 +1,9 @@
 package model;
-
+/***
+ * Final Cisco command values
+ * @author Ida Marie Frøseth
+ *
+ */
 public class CiscoCLI{
 	public static final String CONFT = "configure terminal";
 	public static final String EXIT = "exit";

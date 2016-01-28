@@ -16,6 +16,11 @@ import com.cisco.onep.vty.VtyService;
 
 import gui.Logger;
 
+/**
+ * This class handles the connection to the router. 
+ * @author Ida Marie Frøseth
+ *
+ */
 public class Connection {
 	//Node connect parameters
 	private String routerIP;
@@ -29,7 +34,14 @@ public class Connection {
 	protected VtyService vty;
 	
 	
-    public Connection(String ipaddress, String userName, String password, String applicationName) throws OnepException {
+	/**
+	 * Constructor for initializing the connection.
+	 * @param ipaddress of the network element to connect
+	 * @param userName 
+	 * @param password
+	 * @param applicationName this name has to be unique for every concurrent event
+	 */
+    public Connection(String ipaddress, String userName, String password, String applicationName) {
     	pinningFile = "TLS_Pinning2";
     	this.routerIP = ipaddress;
     	this.username = userName;
@@ -95,11 +107,18 @@ public class Connection {
 		Thread connMon = new ConnectionMonitor();
 		connMon.start();
 	}
-	
+	/**
+	 * Getter for the NetworkElement
+	 * @return
+	 */
 	public NetworkElement getNetworkElement(){
 		return this.networkElement;
 	}
-	
+	/**
+	 * Runs in a separate thread and check if the connection to is up
+	 * @author Ida Marie Frøseth
+	 *
+	 */
 	class ConnectionMonitor extends Thread{
 		@Override
 		public void run() {
